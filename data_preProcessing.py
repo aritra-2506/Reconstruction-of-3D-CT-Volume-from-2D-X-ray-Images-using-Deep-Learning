@@ -70,49 +70,71 @@ def main(folderPath):
     k = np.logical_and(scaledIm > (wl-0.5-(ww-1)/2.0), scaledIm <= (wl-0.5+(ww-1)/2.0))
     windowed[k] = ((scaledIm[k] - (wl-0.5))/(ww-1)+0.5)*255
     windowed[scaledIm > (wl-0.5+(ww-1)/2.0)] = 255
+    
+    #Rotations
     windowed=np.rot90(windowed)
     windowed = np.rot90(windowed)
     windowed = np.rot90(windowed)
+    
+    #Data Slicing for Ribs, Vascular and Spine
     windowed=np.transpose(windowed)
-    windowed=windowed[0:50]
+    windowed_R=windowed[0:50]
+    windowed_V = windowed[50:100]
+    windowed_S = windowed[100:150]
+    windowed_R = np.transpose(windowed_R)
+    windowed_V = np.transpose(windowed_V)
+    windowed_S = np.transpose(windowed_S)
     windowed = np.transpose(windowed)
-    #print(windowed.shape)
+    
+    #Zero Padding Sliced Data for Original Volume
     m=np.zeros((512, 512))
-    #print(m.shape)
     j=m
+    l=m
     for x in range(0,98):
         j = np.dstack((j, m))
-    windowed=np.dstack((windowed, j))
-    print(windowed.shape)
-    print(type(windowed))
+    for y in range(0,48):
+        l = np.dstack((l, m))
+    windowed_R=np.dstack((windowed_R, j))
+    k = np.dstack((j, m))
+    windowed_S = np.dstack((k,windowed_S))
+    o=l
+    o = np.dstack((o, m))
+    windowed_V = np.dstack((o, windowed_V))
+    windowed_V = np.dstack((windowed_V,l))
+    
+    #3D DICOM Data
+    a=windowed
+    
+    #Creating 2D DRR Label Data for Original and Sliced Volumes
     b=windowed.sum(2)
-    return b
-    '''print(b.shape)
-    print(type(b))
-    plt.imshow(b, cmap=plt.cm.bone, aspect=1)
-    plt.show()
-    # windowed image (in 2D) is correct i checked visually in other DICOM viewers
-    print("arrays made %s" % (time.time() - st))'''
-    #print(type(windowed))
-    #print(windowed.shape)
-    #return windowed
-
-
-    # Volume(scaledIm, spacing=pix_spacing).show(bg="black")
-    '''vol = Volume(windowed, spacing=pix_spacing)
-    vol.permuteAxes(2, 1, 0).mirror("y")
-    vol.show(bg="black")'''
-
-    # X, Y, Z = np.mgrid[:30, :30, :30]
-    # scalar_field = ((X-15)**2 + (Y-15)**2 + (Z-15)**2)/225
-    # Volume(scalar_field, spacing=pix_spacing).show(bg="black")      # looks good on this example
+    c = windowed_R.sum(2)
+    d = windowed_V.sum(2)
+    e = windowed_S.sum(2)
+    return a, b, c, d, e, pix_spacing
 
 
 if __name__ == '__main__':
     folder = "C:/Users/Aritra Mazumdar/Downloads/ISIC/3000568-87015/"
-    x=main(folder)
-    #print(x.shape)
-    #print(type(x))
-    plt.imshow(x, cmap=plt.cm.bone, aspect=1)
+    p,q,r,s,t,u=main(folder)
+    
+    #3D DICOM Data Visualization
+    vol = Volume(p, spacing=u)
+    vol.permuteAxes(2, 1, 0).mirror("y")
+    vol.show(bg="black")
+    
+    #2D DRR Plots
+    fig = plt.figure()
+    #Complete DRR
+    a1 = plt.subplot(2, 2, 1)
+    a1.imshow(q, cmap=plt.cm.bone, aspect=1)
+    #DRR Ribs
+    a2 = plt.subplot(2, 2, 2)
+    a2.imshow(r, cmap=plt.cm.bone, aspect=1)
+    #DRR Vascular
+    a3 = plt.subplot(2, 2, 3)
+    a3.imshow(s, cmap=plt.cm.bone, aspect=1)
+    #DRR Spine
+    a4 = plt.subplot(2, 2, 4)
+    a4.imshow(t, cmap=plt.cm.bone, aspect=1)
     plt.show()
-    #print(j.shape)
+
