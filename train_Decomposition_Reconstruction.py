@@ -74,7 +74,7 @@ for filenameDCM in lstFilesDCM_S:
 images=np.asarray(images)
 images = cv2.normalize(images, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 images.astype(np.uint8)
-images = images.reshape((2, 256, 256, 1))
+images = images.reshape((4, 256, 256, 1))
 images = images.astype('float32') / 255
 
 labels_R=images
@@ -82,19 +82,19 @@ labels_R=images
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D1.astype(np.uint8)
-labels_D1 = labels_D1.reshape((2, 256, 256, 1))
+labels_D1 = labels_D1.reshape((4, 256, 256, 1))
 labels_D1 = labels_D1.astype('float32') / 255
 
 labels_D2=np.asarray(labels_D2)
 labels_D2 = cv2.normalize(labels_D2, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D2.astype(np.uint8)
-labels_D2 = labels_D2.reshape((2, 256, 256, 1))
+labels_D2 = labels_D2.reshape((4, 256, 256, 1))
 labels_D2 = labels_D2.astype('float32') / 255
 
 labels_D3=np.asarray(labels_D3)
 labels_D3 = cv2.normalize(labels_D3, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D3.astype(np.uint8)
-labels_D3 = labels_D3.reshape((2, 256, 256, 1))
+labels_D3 = labels_D3.reshape((4, 256, 256, 1))
 labels_D3 = labels_D3.astype('float32') / 255
 
 
@@ -176,18 +176,24 @@ l2_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img2,labels_layer_D2])))))+
 l3_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img3,labels_layer_D3]))))
 '''
 
-l1_D=0.1*(k.sqrt(k.sum(k.square(output_img1-labels_layer_D1))))+0.9*(k.sum(k.abs(output_img1-labels_layer_D1)))
-l2_D=0.1*(k.sqrt(k.sum(k.square(output_img2-labels_layer_D2))))+0.9*(k.sum(k.abs(output_img2-labels_layer_D2)))
-l3_D=0.1*(k.sqrt(k.sum(k.square(output_img3-labels_layer_D3))))+0.9*(k.sum(k.abs(output_img3-labels_layer_D3)))
+l1_D2=(k.abs(output_img1-labels_layer_D1))
+l2_D2=(k.abs(output_img2-labels_layer_D2))
+l3_D2=(k.abs(output_img3-labels_layer_D3))
+l_D2=0.9*(l1_D2+l2_D2+l3_D2)
 
+l1_D1=k.square(output_img1-labels_layer_D1)
+l2_D1=k.square(output_img2-labels_layer_D2)
+l3_D1=k.square(output_img3-labels_layer_D3)
+l_D1=0.1*k.sqrt(l1_D1+l2_D1+l3_D1)
 
-loss_D=l1_D+l2_D+l3_D
+l_D=l_D1+l_D2
 
 #loss_R=k.sqrt(k.sum(k.square(h.Subtract()([output_img,labels_layer_R]))))
 
-loss_R=k.sqrt(k.sum(k.square(output_img-labels_layer_R)))
+l_R1=k.square(output_img-labels_layer_R)
+l_R=k.sqrt(l_R1)
 
-loss=loss_D+0.5*loss_R
+loss=l_D+0.5*l_R
 
 max_pixel = 1.0
 #metric=(10.0 * k.log((k.square(max_pixel)) / (k.mean(k.square(h.Subtract()([output_img - labels_layer_R])), axis=-1)))) / 2.303
@@ -200,7 +206,7 @@ model.add_metric(metric)
 model.compile(optimizer='adam')
 
 #Fitting
-model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=2, batch_size=1, shuffle=True)
+model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=4, shuffle=True)
 
 # serialize model to JSON
 model_json = model.to_json()
