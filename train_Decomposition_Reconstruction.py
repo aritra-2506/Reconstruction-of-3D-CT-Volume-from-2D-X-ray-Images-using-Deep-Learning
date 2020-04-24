@@ -156,8 +156,7 @@ def build_model(input_img):
     output_img11 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(output_img1)
     output_img22 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(output_img2)
     output_img33 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(output_img3)
-    output_img=h.Add()([output_img11, output_img22, output_img33])
-
+    output_img = h.Add()([output_img11, output_img22, output_img33])
 
     return output_img1, output_img2, output_img3, output_img
 
@@ -175,14 +174,14 @@ model = Model(inputs=[input_img, labels_layer_D1, labels_layer_D2, labels_layer_
 l2_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img2,labels_layer_D2])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img2,labels_layer_D2]))))
 l3_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img3,labels_layer_D3]))))
 '''
-
-y=k.int_shape(output_img1)[1]
+batch_size=4
+y=k.shape(output_img1)[0]
 print(y)
 
 loss1=0
 loss2=0
 
-for i in range (0, 4):
+for i in range (0, batch_size):
     l1=k.abs(output_img1[i]-labels_layer_D1[i])
     l2=k.abs(output_img2[i] - labels_layer_D2[i])
     l3=k.abs(output_img3[i] - labels_layer_D3[i])
@@ -190,16 +189,16 @@ for i in range (0, 4):
     loss1=loss1+l
     loss2 = loss2+k.square(l)
 
-loss1D=0.9*loss1/4
-loss2D=0.1*k.sqrt(loss2)/4
+loss1D=0.9*loss1/batch_size
+loss2D=0.1*k.sqrt(loss2)/batch_size
 lossD=loss1D+loss2D
 
 loss3=0
-for i in range (0, 4):
+for i in range (0, batch_size):
     l_R1 = k.abs(output_img[i] - labels_layer_R[i])
     loss3 = loss3 + k.square(l_R1)
 
-lossR=k.sqrt(loss3)/4
+lossR=k.sqrt(loss3)/batch_size
 loss=lossD+0.5*lossR
 
 max_pixel = 1.0
@@ -213,7 +212,7 @@ model.add_metric(metric)
 model.compile(optimizer='adam')
 
 #Fitting
-model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=4, shuffle=True)
+model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=batch_size, shuffle=True)
 
 # serialize model to JSON
 model_json = model.to_json()
