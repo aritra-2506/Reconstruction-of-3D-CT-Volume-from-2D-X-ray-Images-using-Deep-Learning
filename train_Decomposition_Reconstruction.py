@@ -176,24 +176,31 @@ l2_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img2,labels_layer_D2])))))+
 l3_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img3,labels_layer_D3]))))
 '''
 
-l1_D2=(k.abs(output_img1-labels_layer_D1))
-l2_D2=(k.abs(output_img2-labels_layer_D2))
-l3_D2=(k.abs(output_img3-labels_layer_D3))
-l_D2=0.9*(l1_D2+l2_D2+l3_D2)
+y=k.int_shape(output_img1)[1]
+print(y)
 
-l1_D1=k.square(output_img1-labels_layer_D1)
-l2_D1=k.square(output_img2-labels_layer_D2)
-l3_D1=k.square(output_img3-labels_layer_D3)
-l_D1=0.1*k.sqrt(l1_D1+l2_D1+l3_D1)
+loss1=0
+loss2=0
 
-l_D=l_D1+l_D2
+for i in range (0, 4):
+    l1=k.abs(output_img1[i]-labels_layer_D1[i])
+    l2=k.abs(output_img2[i] - labels_layer_D2[i])
+    l3=k.abs(output_img3[i] - labels_layer_D3[i])
+    l=l1+l2+l3
+    loss1=loss1+l
+    loss2 = loss2+k.square(l)
 
-#loss_R=k.sqrt(k.sum(k.square(h.Subtract()([output_img,labels_layer_R]))))
+loss1D=0.9*loss1/4
+loss2D=0.1*k.sqrt(loss2)/4
+lossD=loss1D+loss2D
 
-l_R1=k.square(output_img-labels_layer_R)
-l_R=k.sqrt(l_R1)
+loss3=0
+for i in range (0, 4):
+    l_R1 = k.abs(output_img[i] - labels_layer_R[i])
+    loss3 = loss3 + k.square(l_R1)
 
-loss=l_D+0.5*l_R
+lossR=k.sqrt(loss3)/4
+loss=lossD+0.5*lossR
 
 max_pixel = 1.0
 #metric=(10.0 * k.log((k.square(max_pixel)) / (k.mean(k.square(h.Subtract()([output_img - labels_layer_R])), axis=-1)))) / 2.303
