@@ -170,14 +170,36 @@ output_img1, output_img2, output_img3, output_img=build_model(input_img)
 
 model = Model(inputs=[input_img, labels_layer_D1, labels_layer_D2, labels_layer_D3, labels_layer_R], outputs=[output_img1, output_img2, output_img3, output_img])
 
+batch_size=4
+
+#styles - style 3 and 4 best
+#style1
 '''l1_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img1,labels_layer_D1])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img1,labels_layer_D1]))))
 l2_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img2,labels_layer_D2])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img2,labels_layer_D2]))))
 l3_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img3,labels_layer_D3]))))
-'''
-batch_size=4
-y=k.shape(output_img1)[0]
-print(y)
+l_D=(l1_d+l2_D+l3_D)/batch_size
+l_R=k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3]))))/batch_size
+loss=l_D+0.5*l_R'''
 
+'''y=k.shape(output_img1)[0]
+print(y)'''
+
+#style2
+'''l1_D2=(k.abs(output_img1-labels_layer_D1))
+l2_D2=(k.abs(output_img2-labels_layer_D2))
+l3_D2=(k.abs(output_img3-labels_layer_D3))
+l_D2=0.9*(l1_D2+l2_D2+l3_D2)
+
+l1_D1=k.square(output_img1-labels_layer_D1)
+l2_D1=k.square(output_img2-labels_layer_D2)
+l3_D1=k.square(output_img3-labels_layer_D3)
+l_D1=0.1*k.sqrt(l1_D1+l2_D1+l3_D1)
+
+loss_D=(l_D1+l_D2)/batch_size
+loss_R=k.sqrt(k.square(output_img-labels_layer_R))/batch_size
+loss=loss_D+0.5*loss_R'''
+
+#style3
 loss1=0
 loss2=0
 
@@ -200,6 +222,29 @@ for i in range (0, batch_size):
 
 lossR=k.sqrt(loss3)/batch_size
 loss=lossD+0.5*lossR
+
+
+#style4
+'''loss2=0
+
+for i in range (0, batch_size):
+    l1=(output_img1[i]-labels_layer_D1[i])
+    l2=(output_img2[i] - labels_layer_D2[i])
+    l3=(output_img3[i] - labels_layer_D3[i])
+    l=l1+l2+l3
+    loss1=0.9*k.sum(k.abs(l))+0.1*k.sqrt(k.sum(k.square(l)))
+    loss2 = loss2+loss1
+
+lossD=loss2/batch_size
+
+loss3=0
+for i in range (0, batch_size):
+    l_R1=k.sqrt(k.sum(k.abs(output_img[i]-labels_layer_D1[i])))
+    loss3=loss3+l_R1
+
+lossR=loss3/batch_size
+
+loss=lossD+0.5*lossR'''
 
 max_pixel = 1.0
 #metric=(10.0 * k.log((k.square(max_pixel)) / (k.mean(k.square(h.Subtract()([output_img - labels_layer_R])), axis=-1)))) / 2.303
