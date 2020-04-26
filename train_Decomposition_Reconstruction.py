@@ -186,9 +186,6 @@ l_D=(l1_d+l2_D+l3_D)/batch_size
 l_R=k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3]))))/batch_size
 loss=l_D+0.5*l_R'''
 
-'''y=k.shape(output_img1)[0]
-print(y)'''
-
 #style2
 '''l1_D2=(k.abs(output_img1-labels_layer_D1))
 l2_D2=(k.abs(output_img2-labels_layer_D2))
