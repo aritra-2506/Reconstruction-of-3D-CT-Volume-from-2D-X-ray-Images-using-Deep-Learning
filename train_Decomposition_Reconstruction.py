@@ -1,7 +1,7 @@
 import cv2
 import glob
 import numpy as np
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input
+from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input, Lambda, Reshape
 import keras.backend as k
 from keras.models import Model
 import os
@@ -149,9 +149,14 @@ def build_model(input_img):
     uconv2 = Conv2D(192, (3, 3), activation="relu", padding="same")(uconv2)
     uconv2 = Conv2D(64, (3, 3), activation="relu", padding="same")(uconv2)
 
-    output_img1 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)
-    output_img2 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)
-    output_img3 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)
+    output_img = Conv2D(3, (1, 1), activation='sigmoid', padding='same')(uconv2)
+    output_img1 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
+    output_img2 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
+    output_img3 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
+
+    output_img1 = Reshape((256, 256, 1))(output_img1)
+    output_img2 = Reshape((256, 256, 1))(output_img2)
+    output_img3 = Reshape((256, 256, 1))(output_img3)
 
     output_img11 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(output_img1)
     output_img22 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(output_img2)
@@ -224,8 +229,8 @@ lossR=k.sqrt(loss3)/batch_size
 loss=lossD+0.5*lossR
 
 
-#style4
-'''loss2=0
+'''#style4
+loss2=0
 
 for i in range (0, batch_size):
     l1=(output_img1[i]-labels_layer_D1[i])
