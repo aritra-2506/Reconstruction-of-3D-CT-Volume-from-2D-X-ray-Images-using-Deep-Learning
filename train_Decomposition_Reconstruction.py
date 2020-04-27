@@ -249,8 +249,15 @@ lossR=loss3/batch_size
 loss=lossD+0.5*lossR'''
 
 max_pixel = 1.0
-#metric=(10.0 * k.log((k.square(max_pixel)) / (k.mean(k.square(h.Subtract()([output_img - labels_layer_R])), axis=-1)))) / 2.303
+
 metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img - labels_layer_R), axis=-1)))) / 2.303
+
+'''metric_T=0
+for i in range (0, batch_size):
+    metric_R = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img[i] - labels_layer_R[i]), axis=-1)))) / 2.303
+    metric_T=metric_T+metric_R
+
+metric=metric_T/batch_size'''
 
 model.add_loss(loss)
 model.add_metric(metric)
