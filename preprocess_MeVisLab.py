@@ -5,8 +5,6 @@ import pydicom
 import cv2
 
 PathDicom = "C:/Users/Aritra Mazumdar/Downloads/ISIC/3000566-03192"
-#PathDicom = "C:/Users/Aritra Mazumdar/Downloads/ISIC/New/Spine"
-#PathDicom = "C:/Users/Aritra Mazumdar/Downloads/ISIC/New/Vascular"
 
 #lstFilesDCM = []  # create an empty list
 for dirName, subdirList, fileList in os.walk(PathDicom):
