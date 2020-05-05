@@ -272,13 +272,13 @@ metric=metric_T/batch_size'''
 
 k1=0.01
 k2=0.03
-max_val=1
+max_val=255
 
 c1 = (k1 * max_val)**2
 c2 = (k2 * max_val)**2
 
 a=((2*(k.mean(output_img))*(k.mean(labels_layer_R))+c1)*((2*(k.mean(Multiply()([output_img,labels_layer_R])))-(k.mean(output_img))*(k.mean(labels_layer_R)))+c2))
-b=((k.square(k.mean(output_img))+k.square(k.mean(labels_layer_R))+c1)*(k.var(output_img)+k.var(labels_layer_R)+c2))
+b=((k.square(k.mean(output_img))+k.square(k.mean(labels_layer_R))+c1)*(k.square(k.var(output_img))+k.square(k.var(labels_layer_R))+c2))
 
 metric=a/b
 
