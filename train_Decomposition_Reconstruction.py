@@ -99,19 +99,6 @@ labels_D3 = labels_D3.reshape((4, 256, 256, 1))
 labels_D3 = labels_D3.astype('float32') / 255
 
 
-''''#Train-Test split
-images_train=images[0:3]
-images_test=images[3:5]
-labels_D1_train=labels_D1[0:3]
-labels_D1_test=labels_D1[3:5]
-labels_D2_train=labels_D2[0:3]
-labels_D2_test=labels_D1[3:5]
-labels_D3_train=labels_D3[0:3]
-labels_D3_test=labels_D3[3:5]
-labels_R_train=labels_R[0:3]
-labels_R_test=labels_D1[3:5]'''
-
-
 #Buliding Network
 def build_model(input_img):
 
