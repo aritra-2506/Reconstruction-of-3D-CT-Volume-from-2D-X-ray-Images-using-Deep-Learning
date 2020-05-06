@@ -195,22 +195,25 @@ loss=l_D+0.5*l_R'''
 print(y)'''
 
 #style2
-'''l1_D2=(k.abs(output_img1-labels_layer_D1))
+l1_D2=(k.abs(output_img1-labels_layer_D1))
 l2_D2=(k.abs(output_img2-labels_layer_D2))
 l3_D2=(k.abs(output_img3-labels_layer_D3))
-l_D2=0.9*(l1_D2+l2_D2+l3_D2)
+l_D2=(l1_D2+l2_D2+l3_D2)
 
-l1_D1=k.square(output_img1-labels_layer_D1)
+'''l1_D1=k.square(output_img1-labels_layer_D1)
 l2_D1=k.square(output_img2-labels_layer_D2)
 l3_D1=k.square(output_img3-labels_layer_D3)
 l_D1=0.1*k.sqrt(l1_D1+l2_D1+l3_D1)
 
-loss_D=(l_D1+l_D2)/batch_size
-loss_R=k.sqrt(k.square(output_img-labels_layer_R))/batch_size
-loss=loss_D+0.5*loss_R'''
+loss_D=(l_D1+l_D2)'''
+#loss_R=k.sqrt(k.square(output_img-labels_layer_R))
+
+loss=(0.9*k.sum(l_D2)+0.1*k.sqrt(k.sum(k.square(l_D2))))+0.5*(k.sqrt(k.sum(k.square(output_img-labels_layer_R))))
+
+#loss=loss_D+0.5*loss_R
 
 #style3
-loss1=0
+'''loss1=0
 loss2=0
 
 for i in range (0, batch_size):
@@ -231,7 +234,7 @@ for i in range (0, batch_size):
     loss3 = loss3 + k.square(l_R1)
 
 lossR=k.sqrt(loss3)/batch_size
-loss=lossD+0.5*lossR
+loss=lossD+0.5*lossR'''
 
 
 '''#style4
@@ -298,7 +301,7 @@ model.compile(optimizer='adam')
 
 
 #Fitting
-model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=batch_size, shuffle=True)
+model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=batch_size, shuffle=True, validation_split=0.3 )
 
 # serialize model to JSON
 model_json = model.to_json()
