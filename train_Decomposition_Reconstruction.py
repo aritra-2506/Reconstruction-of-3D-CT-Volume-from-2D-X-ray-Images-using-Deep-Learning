@@ -1,6 +1,7 @@
 import cv2
 import glob
 import numpy as np
+from keras.engine.saving import load_model
 from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input, Lambda, Reshape, Multiply
 import keras.backend as k
 from keras.models import Model
@@ -76,7 +77,7 @@ for filenameDCM in lstFilesDCM_S:
 images=np.asarray(images)
 images = cv2.normalize(images, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 images.astype(np.uint8)
-images = images.reshape((4, 256, 256, 1))
+images = images.reshape((8, 256, 256, 1))
 images = images.astype('float32') / 255
 
 labels_R=images
@@ -84,21 +85,32 @@ labels_R=images
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D1.astype(np.uint8)
-labels_D1 = labels_D1.reshape((4, 256, 256, 1))
+labels_D1 = labels_D1.reshape((8, 256, 256, 1))
 labels_D1 = labels_D1.astype('float32') / 255
 
 labels_D2=np.asarray(labels_D2)
 labels_D2 = cv2.normalize(labels_D2, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D2.astype(np.uint8)
-labels_D2 = labels_D2.reshape((4, 256, 256, 1))
+labels_D2 = labels_D2.reshape((8, 256, 256, 1))
 labels_D2 = labels_D2.astype('float32') / 255
 
 labels_D3=np.asarray(labels_D3)
 labels_D3 = cv2.normalize(labels_D3, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D3.astype(np.uint8)
-labels_D3 = labels_D3.reshape((4, 256, 256, 1))
+labels_D3 = labels_D3.reshape((8, 256, 256, 1))
 labels_D3 = labels_D3.astype('float32') / 255
 
+#Train-Test split
+images_train=images[0:6]
+images_test=images[6:8]
+labels_D1_train=labels_D1[0:6]
+labels_D1_test=labels_D1[6:8]
+labels_D2_train=labels_D2[0:6]
+labels_D2_test=labels_D1[6:8]
+labels_D3_train=labels_D3[0:6]
+labels_D3_test=labels_D3[6:8]
+labels_R_train=labels_R[0:6]
+labels_R_test=labels_D1[6:8]
 
 #Buliding Network
 def build_model(input_img):
@@ -168,8 +180,8 @@ output_img1, output_img2, output_img3, output_img=build_model(input_img)
 
 model = Model(inputs=[input_img, labels_layer_D1, labels_layer_D2, labels_layer_D3, labels_layer_R], outputs=[output_img1, output_img2, output_img3, output_img])
 
-batch_size=4
-validation_split=0.3
+batch_size=3
+validation_split=0.2
 train_size=math.ceil(batch_size*validation_split)
 
 #styles - style 3 and 4 best
@@ -281,7 +293,8 @@ metric=a/b
 
 
 model.add_loss(loss)
-model.add_metric(metric)
+model.add_metric(metric, name='ssim')
+
 #Compiling
 model.compile(optimizer='adam')
 
@@ -291,7 +304,7 @@ model.compile(optimizer='adam')
 
 
 #Fitting
-model.fit([images, labels_D1, labels_D2, labels_D3, labels_R], epochs=10, batch_size=batch_size, shuffle=True, validation_split=validation_split )
+hist=model.fit([images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train], epochs=2, batch_size=batch_size, shuffle=True, validation_split=validation_split )
 
 # serialize model to JSON
 model_json = model.to_json()
@@ -300,3 +313,36 @@ with open("model_new.json", "w") as json_file:
 # serialize weights to HDF5
 model.save_weights("model_new.h5")
 print("Saved model to disk")
+
+test_loss, test_ssim = model.evaluate([images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test])
+
+test_loss="%.4f" % round(test_loss, 4)
+test_ssim="%.4f" % round(test_ssim, 4)
+
+print('test_loss:',test_loss,'-', 'test_ssim:',test_ssim)
+
+#Plot Accuracy
+f=plt.figure(1)
+plt.plot(hist.history['ssim'])
+plt.plot(hist.history['val_ssim'])
+plt.title('Model SSIM')
+plt.ylabel('SSIM')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Val'], loc='upper left')
+f.show()
+
+#Plot Loss
+g=plt.figure(2)
+plt.plot(hist.history['loss'])
+plt.plot(hist.history['val_loss'])
+plt.title('Model loss')
+
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Val'], loc='upper right')
+g.show()
+
+
+
+
+#model = load_model('model_new.h5')
