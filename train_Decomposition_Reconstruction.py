@@ -101,16 +101,16 @@ labels_D3 = labels_D3.reshape((8, 256, 256, 1))
 labels_D3 = labels_D3.astype('float32') / 255
 
 #Train-Test split
-images_train=images[0:6]
-images_test=images[6:8]
-labels_D1_train=labels_D1[0:6]
-labels_D1_test=labels_D1[6:8]
-labels_D2_train=labels_D2[0:6]
-labels_D2_test=labels_D1[6:8]
-labels_D3_train=labels_D3[0:6]
-labels_D3_test=labels_D3[6:8]
-labels_R_train=labels_R[0:6]
-labels_R_test=labels_D1[6:8]
+images_train=images[0:5]
+images_test=images[5:8]
+labels_D1_train=labels_D1[0:5]
+labels_D1_test=labels_D1[5:8]
+labels_D2_train=labels_D2[0:5]
+labels_D2_test=labels_D1[5:8]
+labels_D3_train=labels_D3[0:5]
+labels_D3_test=labels_D3[5:8]
+labels_R_train=labels_R[0:5]
+labels_R_test=labels_D1[5:8]
 
 #Buliding Network
 def build_model(input_img):
@@ -342,7 +342,28 @@ plt.xlabel('Epoch')
 plt.legend(['Train', 'Val'], loc='upper right')
 g.show()
 
+outputs= model.predict([images_test, images_test, images_test, images_test, images_test])
+outputs=np.asarray(outputs)
+h=images_test.shape[0]
+
+for i in range(0, h):
+    plt.figure()
+    plt.subplot(2, 3, 1)
+    plt.title('Original DRR')
+    plt.imshow(images_test[i].reshape((256,256)))
+    plt.subplot(2, 3, 2)
+    plt.title('DRR Ribs')
+    plt.imshow(outputs[0][i].reshape((256,256)))
+    plt.subplot(2, 3, 3)
+    plt.title('DRR Vascular')
+    plt.imshow(outputs[1][i].reshape((256,256)))
+    plt.subplot(2, 3, 4)
+    plt.title('DRR Spine')
+    plt.imshow(outputs[2][i].reshape((256,256)))
+    plt.subplot(2, 3, 5)
+    plt.title('DRR Reconstructed')
+    plt.imshow(outputs[3][i].reshape((256,256)))
+    plt.show()
 
 
-
-#model = load_model('model_new.h5')
+model = load_model('model_new.h5')
