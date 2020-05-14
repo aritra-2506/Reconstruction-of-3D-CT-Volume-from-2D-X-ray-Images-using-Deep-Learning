@@ -77,7 +77,7 @@ for filenameDCM in lstFilesDCM_S:
 images=np.asarray(images)
 images = cv2.normalize(images, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 images.astype(np.uint8)
-images = images.reshape((8, 256, 256, 1))
+images = images.reshape((12, 256, 256, 1))
 images = images.astype('float32') / 255
 
 labels_R=images
@@ -85,32 +85,32 @@ labels_R=images
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D1.astype(np.uint8)
-labels_D1 = labels_D1.reshape((8, 256, 256, 1))
+labels_D1 = labels_D1.reshape((12, 256, 256, 1))
 labels_D1 = labels_D1.astype('float32') / 255
 
 labels_D2=np.asarray(labels_D2)
 labels_D2 = cv2.normalize(labels_D2, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D2.astype(np.uint8)
-labels_D2 = labels_D2.reshape((8, 256, 256, 1))
+labels_D2 = labels_D2.reshape((12, 256, 256, 1))
 labels_D2 = labels_D2.astype('float32') / 255
 
 labels_D3=np.asarray(labels_D3)
 labels_D3 = cv2.normalize(labels_D3, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D3.astype(np.uint8)
-labels_D3 = labels_D3.reshape((8, 256, 256, 1))
+labels_D3 = labels_D3.reshape((12, 256, 256, 1))
 labels_D3 = labels_D3.astype('float32') / 255
 
 #Train-Test split
-images_train=images[0:5]
-images_test=images[5:8]
-labels_D1_train=labels_D1[0:5]
-labels_D1_test=labels_D1[5:8]
-labels_D2_train=labels_D2[0:5]
-labels_D2_test=labels_D1[5:8]
-labels_D3_train=labels_D3[0:5]
-labels_D3_test=labels_D3[5:8]
-labels_R_train=labels_R[0:5]
-labels_R_test=labels_D1[5:8]
+images_train=images[0:9]
+images_test=images[9:12]
+labels_D1_train=labels_D1[0:9]
+labels_D1_test=labels_D1[9:12]
+labels_D2_train=labels_D2[0:9]
+labels_D2_test=labels_D1[9:12]
+labels_D3_train=labels_D3[0:9]
+labels_D3_test=labels_D3[9:12]
+labels_R_train=labels_R[0:9]
+labels_R_test=labels_D1[9:12]
 
 #Buliding Network
 def build_model(input_img):
@@ -366,4 +366,4 @@ for i in range(0, h):
     plt.show()
 
 
-model = load_model('model_new.h5')
+#model = load_model('model_new.h5')
