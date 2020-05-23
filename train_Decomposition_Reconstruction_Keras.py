@@ -264,11 +264,11 @@ loss=lossD+0.5*lossR'''
 #Metric PSNR
 
 max_pixel = 1.0
-#metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img - labels_layer_R), axis=-1)))) / 2.303
+#metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img - labels_layer_R))))) / 2.303
 
 '''metric_T=0
 for i in range (0, batch_size):
-    metric_R = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img[i] - labels_layer_R[i]), axis=-1)))) / 2.303
+    metric_R = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img[i] - labels_layer_R[i]))))) / 2.303
     metric_T=metric_T+metric_R
 
 metric=metric_T/batch_size'''
