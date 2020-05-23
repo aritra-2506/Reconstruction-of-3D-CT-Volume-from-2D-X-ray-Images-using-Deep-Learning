@@ -231,25 +231,25 @@ loss=loss2/batch_size'''
 #Metric PSNR
 
 #max_pixel = 1.0
-#metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square((output_img1 - labels_layer_D1)+(output_img2 - labels_layer_D2)+(output_img3 - labels_layer_D3)), axis=-1)))) / 2.303
+#metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square((output_img1 - labels_layer_D1)+(output_img2 - labels_layer_D2)+(output_img3 - labels_layer_D3)))))) / 2.303
 
 '''metric_T1=0
 for i in range (0, batch_size):
-    metric_R1 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img1[i] - labels_layer_D1[i]), axis=-1)))) / 2.303
+    metric_R1 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img1[i] - labels_layer_D1[i]))))) / 2.303
     metric_T1=metric_T1+metric_R1
 
 metric1=metric_T1/batch_size
 
 metric_T2=0
 for i in range (0, batch_size):
-    metric_R2 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img2[i] - labels_layer_D2[i]), axis=-1)))) / 2.303
+    metric_R2 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img2[i] - labels_layer_D2[i]))))) / 2.303
     metric_T2=metric_T2+metric_R2
 
 metric2=metric_T2/batch_size
 
 metric_T3=0
 for i in range (0, batch_size):
-    metric_R3 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img3[i] - labels_layer_D3[i]), axis=-1)))) / 2.303
+    metric_R3 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img3[i] - labels_layer_D3[i]))))) / 2.303
     metric_T3=metric_T3+metric_R3
 
 metric3=metric_T3/batch_size
