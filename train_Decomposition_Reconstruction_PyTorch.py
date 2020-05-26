@@ -121,7 +121,7 @@ labels_R_test=labels_D1[8:12]
 
 
 train_dataset = TensorDataset(images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train)
-batch_size=4
+batch_size=2
 
 train_loader = DataLoader(
     train_dataset,
@@ -129,7 +129,7 @@ train_loader = DataLoader(
 )
 
 test_dataset = TensorDataset(images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test)
-batch_size=4
+batch_size=2
 
 test_loader = DataLoader(
     test_dataset,
@@ -183,7 +183,7 @@ class UNet(nn.Module):
         self.dconv_up11 = single_out1(192, 192)
         self.dconv_up12 = single_out1(192, 64)
 
-        self.out = single_out(64, 1)
+        self.out = single_out(64, 3)
         self.out_conv1=single_out2(1,1)
         self.out_conv2 = single_out2(1, 1)
         self.out_conv3 = single_out2(1, 1)
@@ -221,9 +221,23 @@ class UNet(nn.Module):
         x = self.dconv_up11(x)
         x = self.dconv_up12(x)
 
-        x1 = self.out(x)
-        x2 = self.out(x)
-        x3 = self.out(x)
+        x=self.out(x)
+        #print(x.shape)
+
+        #x1 = self.out(x)
+        #x2 = self.out(x)
+        #x3 = self.out(x)
+        x=x.permute(1, 0, 2, 3)
+        x1=x[0]
+        x2=x[1]
+        x3=x[2]
+        x1=x1.unsqueeze(0)
+        x2 = x2.unsqueeze(0)
+        x3 = x3.unsqueeze(0)
+
+        x1 = x1.permute(1, 0, 2, 3)
+        x2 = x2.permute(1, 0, 2, 3)
+        x3 = x3.permute(1, 0, 2, 3)
 
 
         out1=self.out_conv1(x1)
@@ -241,10 +255,19 @@ output = UNet()
 
 optimizer = optim.Adam(output.parameters(), lr=0.001)
 
+metric_values=[]
+epoch_values=[]
+loss_values=[]
+
 for epoch in range(2):
-    running_loss1 = 0.0
-    running_loss2 = 0.0
-    #running_loss3 = 0.0
+
+    running_loss = 0.0
+    running_metric = 0.0
+    epoch_loss=0.0
+    epoch_acc=0.0
+    m=1
+
+
     for i, (images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train) in enumerate(train_loader):
 
         optimizer.zero_grad()
@@ -257,22 +280,77 @@ for epoch in range(2):
         l = l1 + l2 + l3
 
         loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l**2))
-        loss1.backward(retain_graph=True)
-
-        running_loss1 = running_loss1 + loss1.item()
 
         loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
-        loss2.backward(retain_graph=True)
+
+        loss = (loss1 + 0.5 * loss2)
+
+        loss.backward(retain_graph=True)
         optimizer.step()
-        running_loss2 = running_loss2 + loss2.item()
-        loss_total = (running_loss1 + 0.5 * running_loss2)/batch_size
+        running_loss = running_loss + loss.item()
 
-        running_metric=0.0
-        max_pixel = 1.0
+        epoch_loss=epoch_loss+loss.item()
+        #loss_total=running_loss/batch_size
+
+
+        '''max_pixel = 1.0
         metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_train)**2)))) / 2.303
-        running_metric=running_metric+metric.item()
-        metric_total=running_metric/batch_size
+        running_metric=running_metric+metric.item()'''
 
-        print('loss batch', i+1, 'epoch', epoch+1, ':', "%.3f" % round(loss_total, 3),'-','metric batch', i+1, 'epoch', epoch+1, ':', "%.3f" % round(metric_total, 3))
+        k1 = 0.01
+        k2 = 0.03
+        max_val = 255
+        c1 = (k1 * max_val) ** 2
+        c2 = (k2 * max_val) ** 2
+
+        a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_train)) + c1) * ((2 * (
+            torch.mean(torch.mul(out,labels_R_train))) - (torch.mean(out)) * (torch.mean(labels_R_train))) + c2))
+        b = (((torch.mean(out))**2 + (torch.mean(labels_R_train))**2 + c1) * (
+                    (torch.var(out))**2 + (torch.var(labels_R_train))**2 + c2))
+        metric = (a / b)
+        running_metric = running_metric + metric.item()
+        #metric_values.append(metric)
+        epoch_acc=epoch_acc+metric.item()
+
+        if (i % 2 == 1):    # print every 2000 mini-batches
+            a=round((running_metric / 2), 3)
+
+
+            print('loss batch', m, 'epoch', epoch+1, ':', "%.3f" % round((running_loss/2), 3),'-','metric batch', m, 'epoch', epoch+1, ':', "%.3f" % round((running_metric/2), 3))
+
+            running_loss = 0.0
+            running_metric = 0.0
+            m=m+1
+        m=m
+
+    m=m
+    epoch_loss = epoch_loss / 4
+    epoch_acc = epoch_acc / 4
+    j=epoch+1
+    print('loss epoch', j, ':', "%.3f" % round(epoch_loss, 3), '-', 'metric epoch',
+              epoch + 1, ':', "%.3f" % round(epoch_acc, 3))
+
+    metric_values.append(round(epoch_acc, 3))
+    loss_values.append(round(epoch_loss, 3))
+    epoch_values.append(j)
+
+
 
 print('Finished Training')
+
+f=plt.figure(1)
+plt.title('Model Epoch Loss')
+plt.ylabel('Epoch Loss')
+plt.xlabel('Epoch')
+plt.plot(np.array(epoch_values), np.array(loss_values),'r')
+f.show()
+
+g=plt.figure(2)
+plt.title('Model Epoch Accuracy')
+plt.ylabel('Epoch Accuracy')
+plt.xlabel('Epoch')
+plt.plot(np.array(epoch_values), np.array(metric_values),'b')
+g.show()
+
+
+
