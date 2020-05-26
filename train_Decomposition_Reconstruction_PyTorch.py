@@ -222,11 +222,7 @@ class UNet(nn.Module):
         x = self.dconv_up12(x)
 
         x=self.out(x)
-        #print(x.shape)
 
-        #x1 = self.out(x)
-        #x2 = self.out(x)
-        #x3 = self.out(x)
         x=x.permute(1, 0, 2, 3)
         x1=x[0]
         x2=x[1]
@@ -252,6 +248,7 @@ class UNet(nn.Module):
 
 output = UNet()
 
+print(output)
 
 optimizer = optim.Adam(output.parameters(), lr=0.001)
 
@@ -338,6 +335,9 @@ for epoch in range(2):
 
 print('Finished Training')
 
+
+
+
 f=plt.figure(1)
 plt.title('Model Epoch Loss')
 plt.ylabel('Epoch Loss')
@@ -352,5 +352,29 @@ plt.xlabel('Epoch')
 plt.plot(np.array(epoch_values), np.array(metric_values),'b')
 g.show()
 
+#Save checkpoint
+checkpoint = {'output': UNet(),
+          'state_dict': output.state_dict(),
+          'optimizer' : optimizer.state_dict()}
 
+torch.save(checkpoint, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth')
+
+
+def load_checkpoint(filepath):
+    checkpoint = torch.load(filepath)
+    output = checkpoint['output']
+    output.load_state_dict(checkpoint['state_dict'])
+    for parameter in output.parameters():
+        parameter.requires_grad = False
+
+    output.eval()
+    return output
+
+output = load_checkpoint('C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth')
+
+#Save model
+torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
+
+model = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
+model.eval()
 
