@@ -106,6 +106,8 @@ labels_D2=torch.from_numpy(labels_D2)
 labels_D3=torch.from_numpy(labels_D3)
 labels_R=torch.from_numpy(labels_R)
 
+images_test1=images[10:12]
+
 #Train-Test split
 images_train=images[0:8]
 images_val=images[8:10]
@@ -138,19 +140,19 @@ train_loader = DataLoader(
 )
 
 val_dataset = TensorDataset(images_val, labels_D1_val, labels_D2_val, labels_D3_val, labels_R_val)
-batch_size=images_val.shape[0]
+batch_size_val=images_val.shape[0]
 
 val_loader = DataLoader(
     val_dataset,
-    batch_size=batch_size
+    batch_size=batch_size_val
 )
 
 test_dataset = TensorDataset(images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test)
-batch_size=2
+batch_size_test=2
 
 test_loader = DataLoader(
     test_dataset,
-    batch_size=batch_size
+    batch_size=batch_size_test-1
 )
 
 def double_conv(in_channels, out_channels):
@@ -446,10 +448,19 @@ test_loss_values=[]
 test_metric_values=[]
 batch_values=[]
 
+outputs=[]
+outputs1=[]
+outputs2=[]
+outputs3=[]
+
 with torch.set_grad_enabled(False):
     for i, (images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test) in enumerate(
             test_loader):
         out1, out2, out3, out = output(images_test)
+        outputs.append(out)
+        outputs1.append(out1)
+        outputs2.append(out2)
+        outputs3.append(out3)
 
         l1 = (out1 - labels_D1_test)
         l2 = (out2 - labels_D2_test)
@@ -506,4 +517,47 @@ plt.ylabel('SSIM')
 plt.xlabel('Number of batches')
 plt.plot(batch_values, test_metric_values,'b')
 g.show()
+
+
+h=len(outputs)
+outputs_list=[]
+outputs_list1=[]
+outputs_list2=[]
+outputs_list3=[]
+
+for i in range(0,h):
+  outputs_a=outputs[i].tolist()
+  outputs_b = outputs1[i].tolist()
+  outputs_c = outputs2[i].tolist()
+  outputs_d = outputs3[i].tolist()
+  outputs_list.append(outputs_a)
+  outputs_list1.append(outputs_b)
+  outputs_list2.append(outputs_c)
+  outputs_list3.append(outputs_d)
+
+outputs_np=np.asarray(outputs_list)
+outputs_np1=np.asarray(outputs_list1)
+outputs_np2=np.asarray(outputs_list2)
+outputs_np3=np.asarray(outputs_list3)
+
+
+
+for i in range(0, h):
+    plt.figure()
+    plt.subplot(2, 3, 1)
+    plt.title('Original DRR')
+    plt.imshow(images_test1[i].reshape((256,256)))
+    plt.subplot(2, 3, 2)
+    plt.title('DRR Ribs')
+    plt.imshow(outputs_np1[i].reshape((256,256)))
+    plt.subplot(2, 3, 3)
+    plt.title('DRR Vascular')
+    plt.imshow(outputs_np2[i].reshape((256,256)))
+    plt.subplot(2, 3, 4)
+    plt.title('DRR Spine')
+    plt.imshow(outputs_np3[i].reshape((256,256)))
+    plt.subplot(2, 3, 5)
+    plt.title('DRR Reconstructed')
+    plt.imshow(outputs_np[i].reshape((256,256)))
+    plt.show()
 
