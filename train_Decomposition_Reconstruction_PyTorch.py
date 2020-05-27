@@ -108,15 +108,24 @@ labels_R=torch.from_numpy(labels_R)
 
 #Train-Test split
 images_train=images[0:8]
-images_test=images[8:12]
+images_val=images[8:10]
+images_test=images[10:12]
+
 labels_D1_train=labels_D1[0:8]
-labels_D1_test=labels_D1[8:12]
+labels_D1_val=labels_D1[8:10]
+labels_D1_test=labels_D1[10:12]
+
 labels_D2_train=labels_D2[0:8]
-labels_D2_test=labels_D1[8:12]
+labels_D2_val=labels_D2[8:10]
+labels_D2_test=labels_D2[10:12]
+
 labels_D3_train=labels_D3[0:8]
-labels_D3_test=labels_D3[8:12]
+labels_D3_val=labels_D3[8:10]
+labels_D3_test=labels_D3[10:12]
+
 labels_R_train=labels_R[0:8]
-labels_R_test=labels_D1[8:12]
+labels_R_val=labels_R[8:10]
+labels_R_test=labels_R[10:12]
 
 
 
@@ -125,6 +134,14 @@ batch_size=2
 
 train_loader = DataLoader(
     train_dataset,
+    batch_size=batch_size
+)
+
+val_dataset = TensorDataset(images_val, labels_D1_val, labels_D2_val, labels_D3_val, labels_R_val)
+batch_size=images_val.shape[0]
+
+val_loader = DataLoader(
+    val_dataset,
     batch_size=batch_size
 )
 
@@ -255,6 +272,8 @@ optimizer = optim.Adam(output.parameters(), lr=0.001)
 metric_values=[]
 epoch_values=[]
 loss_values=[]
+val_loss_values=[]
+val_metric_values=[]
 
 for epoch in range(2):
 
@@ -320,15 +339,54 @@ for epoch in range(2):
             m=m+1
         m=m
 
+    with torch.set_grad_enabled(False):
+        for i, (images_val, labels_D1_val, labels_D2_val, labels_D3_val, labels_R_val) in enumerate(
+                val_loader):
+            out1, out2, out3, out = output(images_val)
+
+            l1 = (out1 - labels_D1_val)
+            l2 = (out2 - labels_D2_val)
+            l3 = (out3 - labels_D3_val)
+            l = l1 + l2 + l3
+
+            val_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+
+            val_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
+
+            val_loss = (val_loss1 + 0.5 * val_loss2)
+
+            '''max_pixel = 1.0
+            metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303'''
+
+            k1 = 0.01
+            k2 = 0.03
+            max_val = 255
+            c1 = (k1 * max_val) ** 2
+            c2 = (k2 * max_val) ** 2
+
+            a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_val)) + c1) * ((2 * (
+                torch.mean(torch.mul(out, labels_R_val))) - (torch.mean(out)) * (torch.mean(labels_R_val))) + c2))
+            b = (((torch.mean(out)) ** 2 + (torch.mean(labels_R_val)) ** 2 + c1) * (
+                    (torch.var(out)) ** 2 + (torch.var(labels_R_val)) ** 2 + c2))
+            val_metric = (a / b)
+
+
+
     m=m
     epoch_loss = epoch_loss / 4
     epoch_acc = epoch_acc / 4
+    val_loss=val_loss
+    val_metric=val_metric
     j=epoch+1
+
     print('loss epoch', j, ':', "%.3f" % round(epoch_loss, 3), '-', 'metric epoch',
-              epoch + 1, ':', "%.3f" % round(epoch_acc, 3))
+              epoch + 1, ':', "%.3f" % round(epoch_acc, 3),'-', 'val loss epoch', j, ':', "%.3f" % val_loss, '-', 'val metric epoch',
+              epoch + 1, ':', "%.3f" % val_metric)
 
     metric_values.append(round(epoch_acc, 3))
     loss_values.append(round(epoch_loss, 3))
+    val_loss_values.append(val_loss)
+    val_metric_values.append(val_metric)
     epoch_values.append(j)
 
 
@@ -336,21 +394,22 @@ for epoch in range(2):
 print('Finished Training')
 
 
+fig1,ax1=plt.subplots()
+ax1.set_ylabel('Loss')
+ax1.set_xlabel('Number of epochs')
+ax1.plot(epoch_values, loss_values)
+ax1.plot(epoch_values, val_loss_values)
+ax1.legend(['Train', 'Val'])
 
 
-f=plt.figure(1)
-plt.title('Model Epoch Loss')
-plt.ylabel('Epoch Loss')
-plt.xlabel('Epoch')
-plt.plot(np.array(epoch_values), np.array(loss_values),'r')
-f.show()
+fig2,ax2=plt.subplots()
+ax2.set_ylabel('SSIM')
+ax2.set_xlabel('Number of epochs')
+ax2.plot(epoch_values, metric_values)
+ax2.plot(epoch_values, val_metric_values)
+ax2.legend(['Train', 'Val'])
+plt.show()
 
-g=plt.figure(2)
-plt.title('Model Epoch Accuracy')
-plt.ylabel('Epoch Accuracy')
-plt.xlabel('Epoch')
-plt.plot(np.array(epoch_values), np.array(metric_values),'b')
-g.show()
 
 #Save checkpoint
 checkpoint = {'output': UNet(),
