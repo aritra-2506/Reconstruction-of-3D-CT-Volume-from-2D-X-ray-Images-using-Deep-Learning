@@ -395,6 +395,7 @@ print('Finished Training')
 
 
 fig1,ax1=plt.subplots()
+ax1.set_title('Model Loss')
 ax1.set_ylabel('Loss')
 ax1.set_xlabel('Number of epochs')
 ax1.plot(epoch_values, loss_values)
@@ -403,6 +404,7 @@ ax1.legend(['Train', 'Val'])
 
 
 fig2,ax2=plt.subplots()
+ax2.set_title('Model SSIM')
 ax2.set_ylabel('SSIM')
 ax2.set_xlabel('Number of epochs')
 ax2.plot(epoch_values, metric_values)
@@ -436,4 +438,72 @@ torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 
 model = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 model.eval()
+
+running_test_loss = 0.0
+running_test_metric = 0.0
+n=1
+test_loss_values=[]
+test_metric_values=[]
+batch_values=[]
+
+with torch.set_grad_enabled(False):
+    for i, (images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test) in enumerate(
+            test_loader):
+        out1, out2, out3, out = output(images_test)
+
+        l1 = (out1 - labels_D1_test)
+        l2 = (out2 - labels_D2_test)
+        l3 = (out3 - labels_D3_test)
+        l = l1 + l2 + l3
+
+        test_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+
+        test_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_test)))
+
+        test_loss = (test_loss1 + 0.5 * test_loss2)
+        running_test_loss = running_test_loss + test_loss.item()
+
+        '''max_pixel = 1.0
+        metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303
+        running_test_metric=running_test_metric+metric.item()'''
+
+        k1 = 0.01
+        k2 = 0.03
+        max_val = 255
+        c1 = (k1 * max_val) ** 2
+        c2 = (k2 * max_val) ** 2
+
+        a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_test)) + c1) * ((2 * (
+            torch.mean(torch.mul(out, labels_R_test))) - (torch.mean(out)) * (torch.mean(labels_R_test))) + c2))
+        b = (((torch.mean(out)) ** 2 + (torch.mean(labels_R_test)) ** 2 + c1) * (
+                (torch.var(out)) ** 2 + (torch.var(labels_R_test)) ** 2 + c2))
+        test_metric = (a / b)
+        running_test_metric = running_test_metric + test_metric.item()
+
+        if (i % 1 == 0):    # print every 2000 mini-batches
+            batch_values.append(n)
+            test_loss_values.append(round((running_test_loss), 3))
+            test_metric_values.append(round((running_test_metric), 3))
+
+
+            print('test loss batch', n, ':', "%.3f" % round((running_test_loss), 3),'-','test metric batch', n, 'epoch', ':', "%.3f" % round((running_test_metric), 3))
+
+            running_test_loss = 0.0
+            running_test_metric = 0.0
+            n=n+1
+
+
+f=plt.figure(1)
+plt.title('Model Test Loss')
+plt.ylabel('Loss')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_loss_values,'r')
+f.show()
+
+g=plt.figure(2)
+plt.title('Model Test SSIM')
+plt.ylabel('SSIM')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_metric_values,'b')
+g.show()
 
