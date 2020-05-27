@@ -436,8 +436,8 @@ output = load_checkpoint('C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth
 #Save model
 torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 
-model = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
-model.eval()
+output = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
+output.eval()
 
 running_test_loss = 0.0
 running_test_metric = 0.0
