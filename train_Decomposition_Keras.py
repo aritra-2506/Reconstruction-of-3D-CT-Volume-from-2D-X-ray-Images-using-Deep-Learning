@@ -80,8 +80,6 @@ images.astype(np.uint8)
 images = images.reshape((12, 256, 256, 1))
 images = images.astype('float32') / 255
 
-labels_R=images
-
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D1.astype(np.uint8)
