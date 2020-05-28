@@ -1,16 +1,16 @@
 import cv2
-import glob
 import numpy as np
-from keras.engine.saving import load_model
-from keras.layers import Conv2D, MaxPooling2D, Dropout, Conv2DTranspose, concatenate, Input, Lambda, Reshape, Multiply
-import keras.backend as k
-from keras.models import Model
 import os
 import matplotlib.pyplot as plt
 import pydicom
-import keras.layers as h
-import tensorflow as tf
 import math
+import torch
+import torchvision
+from torch import optim
+import torch.optim as optim
+from torch.utils.data import TensorDataset, DataLoader
+import torch.nn as nn
+
 
 PathDicom_W = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_W"
 PathDicom_R = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_R"
@@ -77,276 +77,487 @@ for filenameDCM in lstFilesDCM_S:
 images=np.asarray(images)
 images = cv2.normalize(images, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 images.astype(np.uint8)
-images = images.reshape((12, 256, 256, 1))
+images = images.reshape((12, 1, 256, 256))
 images = images.astype('float32') / 255
+
+labels_R=images
 
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D1.astype(np.uint8)
-labels_D1 = labels_D1.reshape((12, 256, 256, 1))
+labels_D1 = labels_D1.reshape((12, 1, 256, 256))
 labels_D1 = labels_D1.astype('float32') / 255
 
 labels_D2=np.asarray(labels_D2)
 labels_D2 = cv2.normalize(labels_D2, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D2.astype(np.uint8)
-labels_D2 = labels_D2.reshape((12, 256, 256, 1))
+labels_D2 = labels_D2.reshape((12, 1, 256, 256))
 labels_D2 = labels_D2.astype('float32') / 255
 
 labels_D3=np.asarray(labels_D3)
 labels_D3 = cv2.normalize(labels_D3, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 labels_D3.astype(np.uint8)
-labels_D3 = labels_D3.reshape((12, 256, 256, 1))
+labels_D3 = labels_D3.reshape((12, 1, 256, 256))
 labels_D3 = labels_D3.astype('float32') / 255
 
+images=torch.from_numpy(images)
+labels_D1=torch.from_numpy(labels_D1)
+labels_D2=torch.from_numpy(labels_D2)
+labels_D3=torch.from_numpy(labels_D3)
+labels_R=torch.from_numpy(labels_R)
+
+images_test1=images[10:12]
+
 #Train-Test split
-images_train=images[0:9]
-images_test=images[9:12]
-labels_D1_train=labels_D1[0:9]
-labels_D1_test=labels_D1[9:12]
-labels_D2_train=labels_D2[0:9]
-labels_D2_test=labels_D1[9:12]
-labels_D3_train=labels_D3[0:9]
-labels_D3_test=labels_D3[9:12]
+images_train=images[0:8]
+images_val=images[8:10]
+images_test=images[10:12]
 
-#Buliding Network
-def build_model(input_img):
+labels_D1_train=labels_D1[0:8]
+labels_D1_val=labels_D1[8:10]
+labels_D1_test=labels_D1[10:12]
 
+labels_D2_train=labels_D2[0:8]
+labels_D2_val=labels_D2[8:10]
+labels_D2_test=labels_D2[10:12]
 
-    conv1 = Conv2D(64, (3, 3), activation='relu', padding='same')(input_img)
-    conv1 = Conv2D(64, (3, 3), activation='relu', padding='same')(conv1)
-    pool1 = MaxPooling2D((2, 2))(conv1)
+labels_D3_train=labels_D3[0:8]
+labels_D3_val=labels_D3[8:10]
+labels_D3_test=labels_D3[10:12]
 
-    conv2 = Conv2D(128, (3, 3), activation='relu', padding='same')(pool1)
-    conv2 = Conv2D(128, (3, 3), activation='relu', padding='same')(conv2)
-    pool2 = MaxPooling2D((2, 2))(conv2)
-
-    conv3 = Conv2D(256, (3, 3), activation='relu', padding='same')(pool2)
-    conv3 = Conv2D(256, (3, 3), activation='relu', padding='same')(conv3)
-    pool3 = MaxPooling2D((2, 2))(conv3)
-
-    conv4 = Conv2D(512, (3, 3), activation='relu', padding='same')(pool3)
-    conv4 = Conv2D(512, (3, 3), activation='relu', padding='same')(conv4)
-    pool4 = Dropout(0.5)(conv4)
-
-    deconv4 = Conv2DTranspose(256, (3, 3), strides=(2, 2), padding="same")(pool4)
-    uconv4 = concatenate([deconv4, conv3])
-    uconv4 = Dropout(0.5)(uconv4)
-    uconv4 = Conv2D(512, (3, 3), activation="relu", padding="same")(uconv4)
-    uconv4 = Conv2D(256, (3, 3), activation="relu", padding="same")(uconv4)
-
-    deconv3 = Conv2DTranspose(128, (3, 3), strides=(2, 2), padding="same")(uconv4)
-    uconv3 = concatenate([deconv3, conv2])
-    uconv3 = Dropout(0.5)(uconv3)
-    uconv3 = Conv2D(256, (3, 3), activation="relu", padding="same")(uconv3)
-    uconv3 = Conv2D(128, (3, 3), activation="relu", padding="same")(uconv3)
-
-    deconv2 = Conv2DTranspose(64, (3, 3), strides=(2, 2), padding="same")(uconv3)
-    uconv2 = concatenate([deconv2, conv1])
-    uconv2 = Dropout(0.5)(uconv2)
-    uconv2 = Conv2D(192, (3, 3), activation="relu", padding="same")(uconv2)
-    uconv2 = Conv2D(64, (3, 3), activation="relu", padding="same")(uconv2)
-
-    '''output_img1 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)
-    output_img2 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)
-    output_img3 = Conv2D(1, (1, 1), activation='sigmoid', padding='same')(uconv2)'''
-
-    output_img = Conv2D(3, (1, 1), activation='sigmoid', padding='same')(uconv2)
-    output_img1 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
-    output_img2 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
-    output_img3 = Lambda(lambda output_img: output_img[:, :, :, 0])(output_img)
-
-    output_img1 = Reshape((256, 256, 1))(output_img1)
-    output_img2 = Reshape((256, 256, 1))(output_img2)
-    output_img3 = Reshape((256, 256, 1))(output_img3)
-
-    return output_img1, output_img2, output_img3
-
-input_img = Input(shape=(256,256,1))
-labels_layer_D1=Input(shape=(256,256,1))
-labels_layer_D2=Input(shape=(256,256,1))
-labels_layer_D3=Input(shape=(256,256,1))
-output_img1, output_img2, output_img3 =build_model(input_img)
-
-
-model = Model(inputs=[input_img, labels_layer_D1, labels_layer_D2, labels_layer_D3], outputs=[output_img1, output_img2, output_img3])
-
-batch_size=3
-validation_split=0.2
-train_size=math.ceil(batch_size*validation_split)
-
-#styles - style 3 and 4 best
-#style1
-'''l1_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img1,labels_layer_D1])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img1,labels_layer_D1]))))
-l2_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img2,labels_layer_D2])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img2,labels_layer_D2]))))
-l3_D=0.1*(k.sqrt(k.sum(k.square(h.Subtract()([output_img3,labels_layer_D3])))))+0.9*(k.sum(k.abs(h.Subtract()([output_img3,labels_layer_D3]))))
-loss=(l1_d+l2_D+l3_D)/batch_size'''
-
-#style2
-'''l1_D2=(k.abs(output_img1-labels_layer_D1))
-l2_D2=(k.abs(output_img2-labels_layer_D2))
-l3_D2=(k.abs(output_img3-labels_layer_D3))
-l_D2=0.9*(l1_D2+l2_D2+l3_D2)
-
-l1_D1=k.square(output_img1-labels_layer_D1)
-l2_D1=k.square(output_img2-labels_layer_D2)
-l3_D1=k.square(output_img3-labels_layer_D3)
-l_D1=0.1*k.sqrt(l1_D1+l2_D1+l3_D1)
-
-loss=(l_D1+l_D2)'''
-
-#loss=loss_D+0.5*loss_R
-
-#style3
-loss1=0
-loss2=0
-
-for i in range (0, train_size):
-    l1=k.abs(output_img1[i]-labels_layer_D1[i])
-    l2=k.abs(output_img2[i] - labels_layer_D2[i])
-    l3=k.abs(output_img3[i] - labels_layer_D3[i])
-    l=l1+l2+l3
-    loss1=loss1+l
-    loss2 = loss2+k.square(l)
-
-loss1D=0.9*loss1/train_size
-loss2D=0.1*k.sqrt(loss2)/train_size
-loss=loss1D+loss2D
-
-
-'''#style4
-loss2=0
-
-for i in range (0, batch_size):
-    l1=(output_img1[i]-labels_layer_D1[i])
-    l2=(output_img2[i] - labels_layer_D2[i])
-    l3=(output_img3[i] - labels_layer_D3[i])
-    l=l1+l2+l3
-    loss1=0.9*k.sum(k.abs(l))+0.1*k.sqrt(k.sum(k.square(l)))
-    loss2 = loss2+loss1
-
-loss=loss2/batch_size'''
-
-#Metric PSNR
-
-#max_pixel = 1.0
-#metric=(10.0 * k.log((max_pixel ** 2) / (k.mean(k.square((output_img1 - labels_layer_D1)+(output_img2 - labels_layer_D2)+(output_img3 - labels_layer_D3)))))) / 2.303
-
-'''metric_T1=0
-for i in range (0, batch_size):
-    metric_R1 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img1[i] - labels_layer_D1[i]))))) / 2.303
-    metric_T1=metric_T1+metric_R1
-
-metric1=metric_T1/batch_size
-
-metric_T2=0
-for i in range (0, batch_size):
-    metric_R2 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img2[i] - labels_layer_D2[i]))))) / 2.303
-    metric_T2=metric_T2+metric_R2
-
-metric2=metric_T2/batch_size
-
-metric_T3=0
-for i in range (0, batch_size):
-    metric_R3 = (10.0 * k.log((max_pixel ** 2) / (k.mean(k.square(output_img3[i] - labels_layer_D3[i]))))) / 2.303
-    metric_T3=metric_T3+metric_R3
-
-metric3=metric_T3/batch_size
-metric=(metric1+metric2+metric3)/3'''
-
-#Metric SSIM
-
-k1=0.01
-k2=0.03
-max_val=255
-
-c1 = (k1 * max_val)**2
-c2 = (k2 * max_val)**2
-
-a1=((2*(k.mean(output_img1))*(k.mean(labels_layer_D1))+c1)*((2*(k.mean(Multiply()([output_img1,labels_layer_D1])))-(k.mean(output_img1))*(k.mean(labels_layer_D1)))+c2))
-b1=((k.square(k.mean(output_img1))+k.square(k.mean(labels_layer_D1))+c1)*(k.square(k.var(output_img1))+k.square(k.var(labels_layer_D1))+c2))
-
-metric1=a1/b1
-
-a2=((2*(k.mean(output_img2))*(k.mean(labels_layer_D2))+c1)*((2*(k.mean(Multiply()([output_img2,labels_layer_D2])))-(k.mean(output_img2))*(k.mean(labels_layer_D2)))+c2))
-b2=((k.square(k.mean(output_img2))+k.square(k.mean(labels_layer_D2))+c1)*(k.square(k.var(output_img2))+k.square(k.var(labels_layer_D2))+c2))
-
-metric2=a2/b2
-
-a3=((2*(k.mean(output_img3))*(k.mean(labels_layer_D3))+c1)*((2*(k.mean(Multiply()([output_img3,labels_layer_D3])))-(k.mean(output_img3))*(k.mean(labels_layer_D3)))+c2))
-b3=((k.square(k.mean(output_img3))+k.square(k.mean(labels_layer_D3))+c1)*(k.square(k.var(output_img3))+k.square(k.var(labels_layer_D3))+c2))
-
-metric3=a3/b3
-metric=(metric1+metric2+metric3)/3
-
-model.add_loss(loss)
-model.add_metric(metric, name='ssim')
-
-#Compiling
-model.compile(optimizer='adam')
+labels_R_train=labels_R[0:8]
+labels_R_val=labels_R[8:10]
+labels_R_test=labels_R[10:12]
 
 
 
+train_dataset = TensorDataset(images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train)
+batch_size=2
+
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=batch_size
+)
+
+val_dataset = TensorDataset(images_val, labels_D1_val, labels_D2_val, labels_D3_val, labels_R_val)
+batch_size_val=images_val.shape[0]
+
+val_loader = DataLoader(
+    val_dataset,
+    batch_size=batch_size_val
+)
+
+test_dataset = TensorDataset(images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test)
+batch_size_test=2
+
+test_loader = DataLoader(
+    test_dataset,
+    batch_size=batch_size_test-1
+)
+
+def double_conv(in_channels, out_channels):
+    return nn.Sequential(
+        nn.Conv2d(in_channels, out_channels, 3, padding=1),
+        nn.ReLU(inplace=True),
+        nn.Conv2d(out_channels, out_channels, 3, padding=1),
+        nn.ReLU(inplace=True)
+    )
+
+def single_out(in_channels, out_channels):
+    return nn.Sequential(
+        nn.Conv2d(in_channels, out_channels, 1),
+        nn.Sigmoid()
+    )
+def single_out1(in_channels, out_channels):
+    return nn.Sequential(
+        nn.Conv2d(in_channels, out_channels, 3, padding=1),
+        nn.ReLU(inplace=True)
+    )
+
+def single_out2(in_channels, out_channels):
+    return nn.Sequential(
+        nn.Conv2d(in_channels, out_channels, 1),
+        nn.Sigmoid()
+    )
+
+
+class UNet(nn.Module):
+
+    def __init__(self):
+        super().__init__()
+
+        self.dconv_down1 = double_conv(1, 64)
+        self.dconv_down2 = double_conv(64, 128)
+        self.dconv_down3 = double_conv(128, 256)
+        self.dconv_down4 = double_conv(256, 512)
+
+        self.maxpool = nn.MaxPool2d(2)
+        self.dropout=nn.Dropout(0.5)
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+
+        self.dconv_up31 = single_out1(768, 512)
+        self.dconv_up32 = single_out1(512, 256)
+        self.dconv_up21 = single_out1(384, 256)
+        self.dconv_up22 = single_out1(256, 128)
+        self.dconv_up11 = single_out1(192, 192)
+        self.dconv_up12 = single_out1(192, 64)
+
+        self.out = single_out(64, 3)
+        self.out_conv1=single_out2(1,1)
+        self.out_conv2 = single_out2(1, 1)
+        self.out_conv3 = single_out2(1, 1)
+
+
+    def forward(self, x):
+        conv1 = self.dconv_down1(x)
+        x = self.maxpool(conv1)
+
+        conv2 = self.dconv_down2(x)
+        x = self.maxpool(conv2)
+
+        conv3 = self.dconv_down3(x)
+        x = self.maxpool(conv3)
+
+        x = self.dconv_down4(x)
+        x = self.dropout(x)
+
+        x = self.upsample(x)
+        x = torch.cat([x, conv3], dim=1)
+        x = self.dropout(x)
+
+        x = self.dconv_up31(x)
+        x = self.dconv_up32(x)
+        x = self.upsample(x)
+        x = torch.cat([x, conv2], dim=1)
+        x = self.dropout(x)
+
+        x = self.dconv_up21(x)
+        x = self.dconv_up22(x)
+        x = self.upsample(x)
+        x = torch.cat([x, conv1], dim=1)
+        x = self.dropout(x)
+
+        x = self.dconv_up11(x)
+        x = self.dconv_up12(x)
+
+        x=self.out(x)
+
+        x=x.permute(1, 0, 2, 3)
+        x1=x[0]
+        x2=x[1]
+        x3=x[2]
+        x1=x1.unsqueeze(0)
+        x2 = x2.unsqueeze(0)
+        x3 = x3.unsqueeze(0)
+
+        x1 = x1.permute(1, 0, 2, 3)
+        x2 = x2.permute(1, 0, 2, 3)
+        x3 = x3.permute(1, 0, 2, 3)
+
+
+        out1=self.out_conv1(x1)
+        out2 = self.out_conv2(x2)
+        out3 = self.out_conv3(x3)
+        out=out1.add(out2)
+        out=out.add(out3)
+
+
+        return out1, out2, out3, out
+
+
+output = UNet()
+
+print(output)
+
+optimizer = optim.Adam(output.parameters(), lr=0.001)
+
+metric_values=[]
+epoch_values=[]
+loss_values=[]
+val_loss_values=[]
+val_metric_values=[]
+
+for epoch in range(2):
+
+    running_loss = 0.0
+    running_metric = 0.0
+    epoch_loss=0.0
+    epoch_acc=0.0
+    m=1
+
+
+    for i, (images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train) in enumerate(train_loader):
+
+        optimizer.zero_grad()
+
+        out1, out2, out3, out = output(images_train)
+
+        l1 = (out1 - labels_D1_train)
+        l2 = (out2 - labels_D2_train)
+        l3 = (out3 - labels_D3_train)
+        l = l1 + l2 + l3
+
+        loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l**2))
+
+        loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
+
+        loss = (loss1 + 0.5 * loss2)
+
+        loss.backward(retain_graph=True)
+        optimizer.step()
+        running_loss = running_loss + loss.item()
+
+        epoch_loss=epoch_loss+loss.item()
+        #loss_total=running_loss/batch_size
+
+
+        '''max_pixel = 1.0
+        metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_train)**2)))) / 2.303
+        running_metric=running_metric+metric.item()'''
+
+        k1 = 0.01
+        k2 = 0.03
+        max_val = 255
+        c1 = (k1 * max_val) ** 2
+        c2 = (k2 * max_val) ** 2
+
+        a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_train)) + c1) * ((2 * (
+            torch.mean(torch.mul(out,labels_R_train))) - (torch.mean(out)) * (torch.mean(labels_R_train))) + c2))
+        b = (((torch.mean(out))**2 + (torch.mean(labels_R_train))**2 + c1) * (
+                    (torch.var(out))**2 + (torch.var(labels_R_train))**2 + c2))
+        metric = (a / b)
+        running_metric = running_metric + metric.item()
+        #metric_values.append(metric)
+        epoch_acc=epoch_acc+metric.item()
+
+        if (i % 2 == 1):    # print every 2000 mini-batches
+            a=round((running_metric / 2), 3)
+
+
+            print('loss batch', m, 'epoch', epoch+1, ':', "%.3f" % round((running_loss/2), 3),'-','metric batch', m, 'epoch', epoch+1, ':', "%.3f" % round((running_metric/2), 3))
+
+            running_loss = 0.0
+            running_metric = 0.0
+            m=m+1
+        m=m
+
+    with torch.set_grad_enabled(False):
+        for i, (images_val, labels_D1_val, labels_D2_val, labels_D3_val, labels_R_val) in enumerate(
+                val_loader):
+            out1, out2, out3, out = output(images_val)
+
+            l1 = (out1 - labels_D1_val)
+            l2 = (out2 - labels_D2_val)
+            l3 = (out3 - labels_D3_val)
+            l = l1 + l2 + l3
+
+            val_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+
+            val_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
+
+            val_loss = (val_loss1 + 0.5 * val_loss2)
+
+            '''max_pixel = 1.0
+            val_metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303'''
+
+            k1 = 0.01
+            k2 = 0.03
+            max_val = 255
+            c1 = (k1 * max_val) ** 2
+            c2 = (k2 * max_val) ** 2
+
+            a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_val)) + c1) * ((2 * (
+                torch.mean(torch.mul(out, labels_R_val))) - (torch.mean(out)) * (torch.mean(labels_R_val))) + c2))
+            b = (((torch.mean(out)) ** 2 + (torch.mean(labels_R_val)) ** 2 + c1) * (
+                    (torch.var(out)) ** 2 + (torch.var(labels_R_val)) ** 2 + c2))
+            val_metric = (a / b)
 
 
 
-#Fitting
-hist=model.fit([images_train, labels_D1_train, labels_D2_train, labels_D3_train], epochs=2, batch_size=batch_size, shuffle=True, validation_split=validation_split )
+    m=m
+    epoch_loss = epoch_loss / 4
+    epoch_acc = epoch_acc / 4
+    val_loss=val_loss
+    val_metric=val_metric
+    j=epoch+1
 
-# serialize model to JSON
-model_json = model.to_json()
-with open("model_new.json", "w") as json_file:
-    json_file.write(model_json)
-# serialize weights to HDF5
-model.save_weights("model_new.h5")
-print("Saved model to disk")
+    print('loss epoch', j, ':', "%.3f" % round(epoch_loss, 3), '-', 'metric epoch',
+              epoch + 1, ':', "%.3f" % round(epoch_acc, 3),'-', 'val loss epoch', j, ':', "%.3f" % val_loss, '-', 'val metric epoch',
+              epoch + 1, ':', "%.3f" % val_metric)
 
-test_loss, test_ssim = model.evaluate([images_test, labels_D1_test, labels_D2_test, labels_D3_test])
+    metric_values.append(round(epoch_acc, 3))
+    loss_values.append(round(epoch_loss, 3))
+    val_loss_values.append(val_loss)
+    val_metric_values.append(val_metric)
+    epoch_values.append(j)
 
-test_loss="%.4f" % round(test_loss, 4)
-test_ssim="%.4f" % round(test_ssim, 4)
 
-print('test_loss:',test_loss,'-', 'test_ssim:',test_ssim)
 
-#Plot Accuracy
+print('Finished Training')
+
+
+fig1,ax1=plt.subplots()
+ax1.set_title('Model Loss')
+ax1.set_ylabel('Loss')
+ax1.set_xlabel('Number of epochs')
+ax1.plot(epoch_values, loss_values)
+ax1.plot(epoch_values, val_loss_values)
+ax1.legend(['Train', 'Val'])
+
+
+fig2,ax2=plt.subplots()
+ax2.set_title('Model SSIM')
+ax2.set_ylabel('SSIM')
+ax2.set_xlabel('Number of epochs')
+ax2.plot(epoch_values, metric_values)
+ax2.plot(epoch_values, val_metric_values)
+ax2.legend(['Train', 'Val'])
+plt.show()
+
+
+#Save checkpoint
+checkpoint = {'output': UNet(),
+          'state_dict': output.state_dict(),
+          'optimizer' : optimizer.state_dict()}
+
+torch.save(checkpoint, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth')
+
+
+def load_checkpoint(filepath):
+    checkpoint = torch.load(filepath)
+    output = checkpoint['output']
+    output.load_state_dict(checkpoint['state_dict'])
+    for parameter in output.parameters():
+        parameter.requires_grad = False
+
+    output.eval()
+    return output
+
+output = load_checkpoint('C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth')
+
+#Save model
+torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
+
+output = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
+output.eval()
+
+running_test_loss = 0.0
+running_test_metric = 0.0
+n=1
+test_loss_values=[]
+test_metric_values=[]
+batch_values=[]
+
+outputs=[]
+outputs1=[]
+outputs2=[]
+outputs3=[]
+
+with torch.set_grad_enabled(False):
+    for i, (images_test, labels_D1_test, labels_D2_test, labels_D3_test, labels_R_test) in enumerate(
+            test_loader):
+        out1, out2, out3, out = output(images_test)
+        outputs.append(out)
+        outputs1.append(out1)
+        outputs2.append(out2)
+        outputs3.append(out3)
+
+        l1 = (out1 - labels_D1_test)
+        l2 = (out2 - labels_D2_test)
+        l3 = (out3 - labels_D3_test)
+        l = l1 + l2 + l3
+
+        test_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+
+        test_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_test)))
+
+        test_loss = (test_loss1 + 0.5 * test_loss2)
+        running_test_loss = running_test_loss + test_loss.item()
+
+        '''max_pixel = 1.0
+        test_metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303
+        running_test_metric=running_test_metric+metric.item()'''
+
+        k1 = 0.01
+        k2 = 0.03
+        max_val = 255
+        c1 = (k1 * max_val) ** 2
+        c2 = (k2 * max_val) ** 2
+
+        a = ((2 * (torch.mean(out)) * (torch.mean(labels_R_test)) + c1) * ((2 * (
+            torch.mean(torch.mul(out, labels_R_test))) - (torch.mean(out)) * (torch.mean(labels_R_test))) + c2))
+        b = (((torch.mean(out)) ** 2 + (torch.mean(labels_R_test)) ** 2 + c1) * (
+                (torch.var(out)) ** 2 + (torch.var(labels_R_test)) ** 2 + c2))
+        test_metric = (a / b)
+        running_test_metric = running_test_metric + test_metric.item()
+
+        if (i % 1 == 0):    # print every 2000 mini-batches
+            batch_values.append(n)
+            test_loss_values.append(round((running_test_loss), 3))
+            test_metric_values.append(round((running_test_metric), 3))
+
+
+            print('test loss batch', n, ':', "%.3f" % round((running_test_loss), 3),'-','test metric batch', n, 'epoch', ':', "%.3f" % round((running_test_metric), 3))
+
+            running_test_loss = 0.0
+            running_test_metric = 0.0
+            n=n+1
+
+
 f=plt.figure(1)
-plt.plot(hist.history['ssim'])
-plt.plot(hist.history['val_ssim'])
-plt.title('Model SSIM')
-plt.ylabel('SSIM')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Val'], loc='upper left')
+plt.title('Model Test Loss')
+plt.ylabel('Loss')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_loss_values,'r')
 f.show()
 
-#Plot Loss
 g=plt.figure(2)
-plt.plot(hist.history['loss'])
-plt.plot(hist.history['val_loss'])
-plt.title('Model loss')
-
-plt.ylabel('Loss')
-plt.xlabel('Epoch')
-plt.legend(['Train', 'Val'], loc='upper right')
+plt.title('Model Test SSIM')
+plt.ylabel('SSIM')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_metric_values,'b')
 g.show()
 
-outputs= model.predict([images_test, images_test, images_test, images_test])
-outputs=np.asarray(outputs)
-h=images_test.shape[0]
+
+h=len(outputs)
+outputs_list=[]
+outputs_list1=[]
+outputs_list2=[]
+outputs_list3=[]
+
+for i in range(0,h):
+  outputs_a=outputs[i].tolist()
+  outputs_b = outputs1[i].tolist()
+  outputs_c = outputs2[i].tolist()
+  outputs_d = outputs3[i].tolist()
+  outputs_list.append(outputs_a)
+  outputs_list1.append(outputs_b)
+  outputs_list2.append(outputs_c)
+  outputs_list3.append(outputs_d)
+
+outputs_np=np.asarray(outputs_list)
+outputs_np1=np.asarray(outputs_list1)
+outputs_np2=np.asarray(outputs_list2)
+outputs_np3=np.asarray(outputs_list3)
+
+
 
 for i in range(0, h):
     plt.figure()
-    plt.subplot(2, 2, 1)
+    plt.subplot(2, 3, 1)
     plt.title('Original DRR')
-    plt.imshow(images_test[i].reshape((256,256)))
-    plt.subplot(2, 2, 2)
+    plt.imshow(images_test1[i].reshape((256,256)))
+    plt.subplot(2, 3, 2)
     plt.title('DRR Ribs')
-    plt.imshow(outputs[0][i].reshape((256,256)))
-    plt.subplot(2, 2, 3)
+    plt.imshow(outputs_np1[i].reshape((256,256)))
+    plt.subplot(2, 3, 3)
     plt.title('DRR Vascular')
-    plt.imshow(outputs[1][i].reshape((256,256)))
-    plt.subplot(2, 2, 4)
+    plt.imshow(outputs_np2[i].reshape((256,256)))
+    plt.subplot(2, 3, 4)
     plt.title('DRR Spine')
-    plt.imshow(outputs[2][i].reshape((256,256)))
+    plt.imshow(outputs_np3[i].reshape((256,256)))
+    plt.subplot(2, 3, 5)
+    plt.title('DRR Reconstructed')
+    plt.imshow(outputs_np[i].reshape((256,256)))
     plt.show()
 
-
-#model = load_model('model_new.h5')
