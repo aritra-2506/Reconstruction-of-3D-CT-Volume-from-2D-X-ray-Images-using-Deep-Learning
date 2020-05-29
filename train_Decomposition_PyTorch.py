@@ -11,6 +11,11 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# Assuming that we are on a CUDA machine, this should print a CUDA device:
+
+print(device)
 
 '''PathDicom_W = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_W"
 PathDicom_R = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_R"
@@ -129,6 +134,22 @@ labels_D3_train=labels_D3[0:8]
 labels_D3_val=labels_D3[8:10]
 labels_D3_test=labels_D3[10:12]
 
+images=images.to(device)
+images_train=images_train.to(device)
+images_val=images_val.to(device)
+images_test=images_test.to(device)
+
+labels_D1_train=labels_D1_train.to(device)
+labels_D1_val=labels_D1_val.to(device)
+labels_D1_test=labels_D1_test.to(device)
+
+labels_D2_train=labels_D2_train.to(device)
+labels_D2_val=labels_D2_val.to(device)
+labels_D2_test=labels_D2_test.to(device)
+
+labels_D3_train=labels_D3_train.to(device)
+labels_D3_val=labels_D3_val.to(device)
+labels_D3_test=labels_D3_test.to(device)
 
 
 train_dataset = TensorDataset(images_train, labels_D1_train, labels_D2_train, labels_D3_train)
@@ -255,6 +276,8 @@ class UNet(nn.Module):
 
 
 output = UNet()
+
+output.cuda()
 
 print(output)
 
