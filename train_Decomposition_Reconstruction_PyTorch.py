@@ -11,6 +11,11 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
 
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# Assuming that we are on a CUDA machine, this should print a CUDA device:
+
+print(device)
 
 PathDicom_W = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_W"
 PathDicom_R = "C:/Users/Aritra Mazumdar/Downloads/ISIC/Dataset/Label_R"
@@ -129,7 +134,26 @@ labels_R_train=labels_R[0:8]
 labels_R_val=labels_R[8:10]
 labels_R_test=labels_R[10:12]
 
+images=images.to(device)
+images_train=images_train.to(device)
+images_val=images_val.to(device)
+images_test=images_test.to(device)
 
+labels_D1_train=labels_D1_train.to(device)
+labels_D1_val=labels_D1_val.to(device)
+labels_D1_test=labels_D1_test.to(device)
+
+labels_D2_train=labels_D2_train.to(device)
+labels_D2_val=labels_D2_val.to(device)
+labels_D2_test=labels_D2_test.to(device)
+
+labels_D3_train=labels_D3_train.to(device)
+labels_D3_val=labels_D3_val.to(device)
+labels_D3_test=labels_D3_test.to(device)
+
+labels_R_train=labels_R_train.to(device)
+labels_R_val=labels_R_val.to(device)
+labels_R_test=labels_R_test.to(device)
 
 train_dataset = TensorDataset(images_train, labels_D1_train, labels_D2_train, labels_D3_train, labels_R_train)
 batch_size=2
@@ -261,11 +285,18 @@ class UNet(nn.Module):
         out=out1.add(out2)
         out=out.add(out3)
 
+        out1.to(device)
+        out2.to(device)
+        out3.to(device)
+        out.to(device)
+
 
         return out1, out2, out3, out
 
 
 output = UNet()
+
+output.cuda()
 
 print(output)
 
@@ -358,7 +389,7 @@ for epoch in range(2):
             val_loss = (val_loss1 + 0.5 * val_loss2)
 
             '''max_pixel = 1.0
-            metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303'''
+            val_metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303'''
 
             k1 = 0.01
             k2 = 0.03
@@ -475,7 +506,7 @@ with torch.set_grad_enabled(False):
         running_test_loss = running_test_loss + test_loss.item()
 
         '''max_pixel = 1.0
-        metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303
+        test_metric=(10.0 * torch.log((max_pixel ** 2) / (torch.mean((out - labels_R_val)**2)))) / 2.303
         running_test_metric=running_test_metric+metric.item()'''
 
         k1 = 0.01
