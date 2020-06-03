@@ -332,17 +332,49 @@ for epoch in range(2):
         optimizer.zero_grad()
 
         out1, out2, out3, out = output(images_train)
+        #print(type(out1))
+        #x = torch.max(input=out1, dim=1, keepdim=True)
+        #print(x.shape)
+        #print(out1.shape)
 
         l1 = (out1 - labels_D1_train)
+        k=l1.shape[0]
         l2 = (out2 - labels_D2_train)
         l3 = (out3 - labels_D3_train)
         l = l1 + l2 + l3
 
-        loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l**2))
 
-        loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
+        for j in range(0,k):
+            if j==0:
+                loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
 
-        loss = (loss1 + 0.5 * loss2)
+                loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
+
+                loss_L = (loss1 + 0.5 * loss2)
+            else:
+                loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
+
+                loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
+
+                loss_T = (loss1 + 0.5 * loss2)
+                #print(loss_T)
+                if loss_T.item() > loss_L.item():
+                    loss_L = loss_L
+
+                else:
+                    loss_L = loss_T
+            #print(loss_L)
+
+
+
+        loss=loss_L
+        #print(loss)
+
+
+
+
+
+        #print(loss.shape)
 
         loss.backward(retain_graph=True)
         optimizer.step()
@@ -386,11 +418,31 @@ for epoch in range(2):
             l3 = (out3 - labels_D3_val)
             l = l1 + l2 + l3
 
-            val_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+            k=l.shape[0]
 
-            val_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_train)))
+            for j in range(0, k):
+                if j == 0:
+                    val_loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
 
-            val_loss = (val_loss1 + 0.5 * val_loss2)
+                    val_loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
+
+                    val_loss_L = (val_loss1 + 0.5 * val_loss2)
+                else:
+                    val_loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
+
+                    val_loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
+
+                    val_loss_T = (val_loss1 + 0.5 * val_loss2)
+
+                    if val_loss_T.item() > val_loss_L.item():
+                        val_loss_L = val_loss_L
+
+                    else:
+                        val_loss_L = val_loss_T
+
+
+
+            val_loss=val_loss_L
 
             mse = criterion(out, labels_R_val)
             val_metric = 10 * math.log10(1 / mse.item())
@@ -461,6 +513,8 @@ def load_checkpoint(filepath):
 
 output = load_checkpoint('C:/Users/Aritra Mazumdar/Downloads/ISIC/checkpoint.pth')
 
+output.cuda()
+
 #Save model
 torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 
@@ -492,12 +546,29 @@ with torch.set_grad_enabled(False):
         l2 = (out2 - labels_D2_test)
         l3 = (out3 - labels_D3_test)
         l = l1 + l2 + l3
+        k=l.shape[0]
+        for j in range(0,k):
+            if j==0:
+                test_loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
 
-        test_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+                test_loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
 
-        test_loss2 = torch.sqrt(torch.sum(torch.abs(out - labels_R_test)))
+                test_loss_L = (test_loss1 + 0.5 * test_loss2)
+            else:
+                test_loss1 = 0.9 * torch.sum(torch.abs(l[j])) + 0.1 * torch.sqrt(torch.sum(l[j] ** 2))
 
-        test_loss = (test_loss1 + 0.5 * test_loss2)
+                test_loss2 = torch.sqrt(torch.sum(torch.abs(out[j] - labels_R_train[j])))
+
+                test_loss_T = (test_loss1 + 0.5 * test_loss2)
+                #print(loss_T)
+                if test_loss_T.item() > test_loss_L.item():
+                    test_loss_L = test_loss_L
+
+                else:
+                    test_loss_L = test_loss_T
+
+
+        test_loss = test_loss_L
         running_test_loss = running_test_loss + test_loss.item()
 
         mse = criterion(out, labels_R_test)
