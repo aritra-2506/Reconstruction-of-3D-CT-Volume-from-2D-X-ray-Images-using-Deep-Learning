@@ -10,6 +10,9 @@ from torch import optim
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
+from scipy.ndimage.interpolation import rotate
+import skimage
+
 import pytorch_ssim
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -89,8 +92,39 @@ for filenameDCM in lstFilesDCM_S:
 images=np.asarray(images)
 images = cv2.normalize(images, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
 images.astype(np.uint8)
-images = images.reshape((12, 1, 256, 256))
-images = images.astype('float32') / 255
+images_no_aug = images.reshape((12, 1, 256, 256))
+images_no_aug = images_no_aug.astype('float32') / 255
+
+images_aug=images_no_aug[7:12]
+images_no_aug1=images_no_aug[0:7]
+d=len(images_aug)
+
+images_list=[]
+for i in range(0,d):
+  h,w=images_aug[i][0].shape
+  angle_range=(0, 180)
+  angle = np.random.randint(*angle_range)
+  images_augmentated = rotate(images_aug[0][0], angle)
+  rate=0.5
+  if np.random.rand() < rate:
+      images_augmentated = images_augmentated[::-1, :]
+  crop_size = (180, 180)
+  top = (h - crop_size[0]) // 2
+  left = (w - crop_size[1]) // 2
+  bottom = top + crop_size[0]
+  right = left + crop_size[1]
+  images_augmentated = images_augmentated[top:bottom, left:right]
+  images_augmentated = skimage.util.random_noise(images_augmentated, mode="gaussian")
+  images_augmentated=cv2.resize(images_augmentated, dsize=(256, 256), interpolation=cv2.INTER_CUBIC)
+  images_augmentated = images_augmentated.astype('float32')
+  images_list.append(images_augmentated)
+
+images_arr=np.asarray(images_list)
+images_no_aug1 = images_no_aug1.reshape((7, 256, 256))
+images_new=np.concatenate((images_no_aug1, images_arr), axis=0)
+images_new = images_new.reshape((12, 1, 256, 256))
+images=images_new
+
 
 labels_D1=np.asarray(labels_D1)
 labels_D1 = cv2.normalize(labels_D1, None, alpha = 0, beta = 255, norm_type = cv2.NORM_MINMAX, dtype = cv2.CV_32F)
