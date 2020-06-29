@@ -13,6 +13,11 @@ import torch.nn as nn
 from scipy.ndimage.interpolation import rotate
 import skimage
 from scipy.ndimage import zoom
+import pytorch_ssim
+import pydicom
+from pydicom.dataset import Dataset, FileDataset
+from pydicom.uid import ExplicitVRLittleEndian
+import pydicom._storage_sopclass_uids
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -75,14 +80,26 @@ labels = cv2.normalize(labels, None, alpha = 0, beta = 255, norm_type = cv2.NORM
 labels.astype(np.uint8)
 labels = labels.astype('float32') / 255
 
-images_val=images[0:2]
-labels_val=labels[0:2]
-
 images=torch.from_numpy(images)
 labels=torch.from_numpy(labels)
 
-images_val=torch.from_numpy(images_val)
-labels_val=torch.from_numpy(labels_val)
+images_test1=images[2:4]
+labels_test1=labels[2:4]
+
+images_train=images[0:4]
+images_val=images[0:2]
+images_test=images[2:4]
+
+labels_train=labels[0:4]
+labels_val=labels[0:2]
+labels_test=labels[2:4]
+
+image_number=0
+slice_number=120
+image_app=images_test[image_number]
+image_app = image_app.reshape((1, 1, 256, 256))
+label_app=labels_test[image_number]
+label_app = label_app.reshape((1, 150, 256, 256))
 
 images=images.to(device)
 labels=labels.to(device)
@@ -90,7 +107,18 @@ labels=labels.to(device)
 images_val=images_val.to(device)
 labels_val=labels_val.to(device)
 
-train_dataset = TensorDataset(images, labels)
+images_train=images_train.to(device)
+images_val=images_val.to(device)
+images_test=images_test.to(device)
+
+labels_train=labels_train.to(device)
+labels_val=labels_val.to(device)
+labels_test=labels_test.to(device)
+
+image_app=image_app.to(device)
+label_app=label_app.to(device)
+
+train_dataset = TensorDataset(images_train, labels_train)
 batch_size=2
 
 train_loader = DataLoader(
@@ -104,6 +132,23 @@ batch_size_val=images_val.shape[0]
 val_loader = DataLoader(
     val_dataset,
     batch_size=batch_size_val
+)
+
+test_dataset = TensorDataset(images_test, labels_test)
+batch_size_test=1
+
+test_loader = DataLoader(
+    test_dataset,
+    batch_size=batch_size_test
+)
+
+
+app_dataset = TensorDataset(image_app, label_app)
+batch_size_app=1
+
+app_loader = DataLoader(
+    app_dataset,
+    batch_size=batch_size_app
 )
 
 def double_conv(in_channels, out_channels):
@@ -224,6 +269,9 @@ class UNet(nn.Module):
         convs = convs.permute(0, 1, 3, 2)
         convs = torch.nn.functional.interpolate(convs, size=256)
         convs = convs.permute(0, 1, 3, 2)
+        convs=self.out_conv1(convs)
+        convs = self.out_conv1(convs)
+        convs = self.out_conv1(convs)
 
         x.to(device)
         convs.to(device)
@@ -256,7 +304,7 @@ for epoch in range(2):
     m=1
 
 
-    for i, (images, labels) in enumerate(train_loader):
+    for i, (images_train, labels_train) in enumerate(train_loader):
 
         optimizer.zero_grad()
 
@@ -276,14 +324,14 @@ for epoch in range(2):
         epoch_loss=epoch_loss+loss.item()
 
 
-        mse = criterion(out1, images)
+        mse = criterion(out1, images_train)
         metric = 10 * math.log10(1 / mse.item())
         running_metric=running_metric+metric
         epoch_acc=epoch_acc+metric
         epoch_acc = epoch_acc + metric
 
 
-        '''metric=pytorch_ssim.ssim(out, labels_R_train)
+        '''metric=pytorch_ssim.ssim(out1, images_train)
 
         running_metric = running_metric + metric.item()
         epoch_acc=epoch_acc+metric.item()'''
@@ -313,10 +361,12 @@ for epoch in range(2):
 
             val_loss = (val_loss1 + 0.5 * val_loss2)
 
+            val_loss=val_loss.item()
+
             mse = criterion(out1, images_val)
             val_metric = 10 * math.log10(1 / mse.item())
 
-            # val_metric = pytorch_ssim.ssim(out, labels_R_val)
+            #val_metric = pytorch_ssim.ssim(out, images_val)
 
     m = m
     epoch_loss = epoch_loss / 4
@@ -384,3 +434,144 @@ torch.save(output, 'C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 output = torch.load('C:/Users/Aritra Mazumdar/Downloads/ISIC/output.pth')
 output.eval()
 
+
+running_test_loss = 0.0
+running_test_metric = 0.0
+n=1
+test_loss_values=[]
+test_metric_values=[]
+batch_values=[]
+
+
+with torch.set_grad_enabled(False):
+    for i, (images_test, labels_test) in enumerate(
+            test_loader):
+        out, out1 = output(images_test)
+
+        l = (out - labels_test)
+
+        test_loss1 = 0.9 * torch.sum(torch.abs(l)) + 0.1 * torch.sqrt(torch.sum(l ** 2))
+
+        test_loss2 = torch.sqrt(torch.sum(torch.abs(out1 - labels_test)))
+
+        test_loss = (test_loss1 + 0.5 * test_loss2)
+        running_test_loss = running_test_loss + test_loss.item()
+
+        '''mse = criterion(out1, images_test)
+        test_metric = 10 * math.log10(1 / mse.item())
+        running_test_metric = running_test_metric + test_metric'''
+
+        test_metric = pytorch_ssim.ssim(out1, images_test)
+        running_test_metric = running_test_metric + test_metric.item()
+
+        if (i % 1 == 0):    # print every 2 mini-batches
+            batch_values.append(n)
+            test_loss_values.append(round((running_test_loss), 3))
+            test_metric_values.append(round((running_test_metric), 3))
+
+
+            print('test loss batch', n, ':', "%.3f" % round((running_test_loss), 3),'-','test metric batch', n, 'epoch', ':', "%.3f" % round((running_test_metric), 3))
+
+            running_test_loss = 0.0
+            running_test_metric = 0.0
+            n=n+1
+
+f=plt.figure(1)
+plt.title('Model Test Loss')
+plt.ylabel('Loss')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_loss_values,'r')
+f.show()
+
+g=plt.figure(2)
+plt.title('Model Test SSIM')
+plt.ylabel('SSIM')
+plt.xlabel('Number of batches')
+plt.plot(batch_values, test_metric_values,'b')
+g.show()
+
+
+
+#app
+
+def write_dicom(image2d):
+
+    meta = pydicom.Dataset()
+    meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
+    meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
+
+    ds = Dataset()
+    ds.file_meta = meta
+
+    ds.is_little_endian = True
+    ds.is_implicit_VR = False
+
+    ds.SOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
+    ds.PatientName = "Test^Firstname"
+    ds.PatientID = "123456"
+
+    ds.Modality = "MR"
+    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
+    ds.StudyInstanceUID = pydicom.uid.generate_uid()
+    ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
+
+    ds.BitsStored = 16
+    ds.BitsAllocated = 16
+    ds.SamplesPerPixel = 1
+    ds.HighBit = 15
+
+    ds.ImagesInAcquisition = "1"
+
+    ds.Rows = image2d.shape[0]
+    ds.Columns = image2d.shape[1]
+    ds.InstanceNumber = 1
+
+    ds.ImagePositionPatient = r"0\0\1"
+    ds.ImageOrientationPatient = r"1\0\0\0\-1\0"
+    ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
+
+    ds.RescaleIntercept = "0"
+    ds.RescaleSlope = "1"
+    ds.PixelSpacing = r"1\1"
+    ds.PhotometricInterpretation = "MONOCHROME2"
+    ds.PixelRepresentation = 1
+
+    pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
+
+    print("Setting pixel data...")
+    ds.PixelData = image2d.tobytes()
+
+    return ds
+
+with torch.set_grad_enabled(False):
+    for i, (image_app, label_app) in enumerate(
+            app_loader):
+        out, out1 = output(images_test)
+        e = out.shape[1]
+        for j in range(0, e):
+            t = out[0][j].cpu().numpy()
+            ds = write_dicom(t)
+            ds.save_as(r"/content/drive/My Drive/NewDataset/save_slices_new/%d.dcm" % (j,), )
+        u = out1[0][0].cpu().numpy()
+        ds1 = write_dicom(u)
+        ds1.save_as(r"/content/drive/My Drive/NewDataset/save_images_new/1.dcm")
+
+dss=pydicom.read_file("/content/drive/My Drive/NewDataset/save_images_new/1.dcm", force=True)
+w=dss.pixel_array
+dss1=pydicom.read_file("/content/drive/My Drive/NewDataset/save_slices_new/%d.dcm" % (slice_number,), force=True)
+v=dss1.pixel_array
+
+plt.figure()
+plt.subplot(2, 2, 1)
+plt.title('Original DRR')
+plt.imshow(images_test1[image_number].reshape((256,256)), cmap=plt.cm.bone)
+plt.subplot(2, 2, 2)
+plt.title('Reconstructed DRR')
+plt.imshow(w, cmap=plt.cm.bone)
+plt.subplot(2, 2, 3)
+plt.title('Original Slice')
+plt.imshow(labels_test1[image_number][slice_number].reshape((256,256)), cmap=plt.cm.bone)
+plt.subplot(2, 2, 4)
+plt.title('Decomposed Slice')
+plt.imshow(v, cmap=plt.cm.bone)
