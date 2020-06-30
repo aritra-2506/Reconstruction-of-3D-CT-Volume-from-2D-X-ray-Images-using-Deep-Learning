@@ -497,7 +497,7 @@ g.show()
 
 #app
 
-def write_dicom(image2d, filename_little_endian):
+def write_dicom(image2d, filename_little_endian, j):
     meta = FileMetaDataset()
     meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
     meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
@@ -534,7 +534,7 @@ def write_dicom(image2d, filename_little_endian):
 
     ds.Rows = image2d.shape[0]
     ds.Columns = image2d.shape[1]
-    ds.InstanceNumber = i
+    ds.InstanceNumber = j
 
     ds.ImagePositionPatient = r"0\0\1"
     ds.ImageOrientationPatient = r"1\0\0\0\-1\0"
@@ -564,12 +564,12 @@ with torch.set_grad_enabled(False):
             t = out[0][j].cpu().numpy()
             t = cv2.resize(t, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
             filename_little_endian = ("/content/drive/My Drive/NewDataset/new_save_slices/%d.dcm" % (j,))
-            ds = write_dicom(t, filename_little_endian)
+            ds = write_dicom(t, filename_little_endian, j)
 
         u = out1[0][0].cpu().numpy()
         u = cv2.resize(u, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
-        filename_little_endian = ("/content/drive/My Drive/NewDataset/new_save_image/1.dcm")
-        ds1 = write_dicom(u, filename_little_endian)
+        filename_little_endian = ("/content/drive/My Drive/NewDataset/new_save_image/0.dcm")
+        ds1 = write_dicom(u, filename_little_endian, 0)
 
 
 dss=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_image/1.dcm")
