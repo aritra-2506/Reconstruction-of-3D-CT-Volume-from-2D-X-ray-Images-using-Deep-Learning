@@ -569,7 +569,7 @@ with torch.set_grad_enabled(False):
         u = out1[0][0].cpu().numpy()
         u = cv2.resize(u, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
         filename_little_endian = ("/content/drive/My Drive/NewDataset/new_save_image/1.dcm")
-        ds1 = write_dicom(u)
+        ds1 = write_dicom(u, filename_little_endian)
 
 
 dss=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_image/1.dcm")
