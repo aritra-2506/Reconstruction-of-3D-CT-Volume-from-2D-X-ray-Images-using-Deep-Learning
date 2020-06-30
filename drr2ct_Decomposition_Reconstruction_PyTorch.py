@@ -572,9 +572,9 @@ with torch.set_grad_enabled(False):
         ds1 = write_dicom(u)
 
 
-dss=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_image/1.dcm", force=True)
+dss=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_image/1.dcm")
 w=dss.pixel_array
-dss1=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_slices/%d.dcm" % (slice_number,), force=True)
+dss1=pydicom.read_file("/content/drive/My Drive/NewDataset/new_save_slices/%d.dcm" % (slice_number,))
 v=dss1.pixel_array
 
 t=images_test1[image_number].reshape((256,256))
