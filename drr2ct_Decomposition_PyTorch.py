@@ -34,6 +34,8 @@ PathDicom_labels = "C:/Users/Aritra Mazumdar/Downloads/ISIC/data_folder/NewDatas
 PathDicom_images = "/content/drive/My Drive/NewDataset/images"
 PathDicom_labels = "/content/drive/My Drive/NewDataset/labels"
 
+dss=pydicom.read_file("/content/drive/My Drive/NewDataset/resave/1.dcm")
+
 images=[]
 for dirName, subdirList, fileList in os.walk(PathDicom_images):
     for filename in fileList:
@@ -452,62 +454,35 @@ g.show()
 
 #app
 
-def write_dicom(image2d, filename_little_endian, j):
-    meta = FileMetaDataset()
-    meta.MediaStorageSOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
-    meta.MediaStorageSOPInstanceUID = pydicom.uid.generate_uid()
-    meta.TransferSyntaxUID = pydicom.uid.ExplicitVRLittleEndian
-    meta.ImplementationClassUID = "1.2.3.4"
+def write_dicom(image2d, i, slicesLocation, dss):
 
 
-    ds = FileDataset(filename_little_endian, {},
-                     file_meta=meta, preamble=b"\0" * 128)
+    ds=dss
+    ds.InstanceNumber = i + 1
 
-    ds.is_little_endian = True
-    ds.is_implicit_VR = False
+    ds.file_meta.MediaStorageSOPInstanceUID=pydicom.uid.generate_uid()
+    ds.SOPInstanceUID = pydicom.uid.generate_uid()
 
-    ds.SOPClassUID = pydicom._storage_sopclass_uids.MRImageStorage
-    ds.PatientName = "Test^Firstname"
-    ds.PatientID = "123456"
+    sliceLocation = float(slicesLocation)
+    ds.sliceLocation = sliceLocation
 
-    ds.Modality = "MR"
-    ds.SeriesInstanceUID = pydicom.uid.generate_uid()
-    ds.StudyInstanceUID = pydicom.uid.generate_uid()
-    ds.FrameOfReferenceUID = pydicom.uid.generate_uid()
 
-    dt = datetime.datetime.now()
-    ds.ContentDate = dt.strftime('%Y%m%d')
-    timeStr = dt.strftime('%H%M%S.%f')  # long format with micro seconds
-    ds.ContentTime = timeStr
+    ds.PixelSpacing = r"0.822266\0.822266"
+    print(ds.sliceLocation)
+    a = float(-234.800003)
 
-    ds.BitsStored = 16
-    ds.BitsAllocated = 16
-    ds.SamplesPerPixel = 1
-    ds.HighBit = 15
+    b = float(-170.500000)
 
-    ds.ImagesInAcquisition = "1"
+    ds.ImagePositionPatient = [a, b, sliceLocation]
 
-    ds.Rows = image2d.shape[0]
-    ds.Columns = image2d.shape[1]
-    ds.InstanceNumber = j
-
-    ds.ImagePositionPatient = r"0\0\1"
-    ds.ImageOrientationPatient = r"1\0\0\0\-1\0"
-    ds.ImageType = r"ORIGINAL\PRIMARY\AXIAL"
-
-    ds.RescaleIntercept = "0"
-    ds.RescaleSlope = "1"
-    ds.PixelSpacing = r"1\1"
-    ds.PhotometricInterpretation = "MONOCHROME2"
-    ds.PixelRepresentation = 1
-
-    pydicom.dataset.validate_file_meta(ds.file_meta, enforce_standard=True)
 
     print("Setting pixel data...")
     ds.PixelData = image2d.tobytes()
-    ds.save_as(filename_little_endian)
 
-    return
+    return ds
+
+slice1Location=-25
+sliceThickness=1.25
 
 with torch.set_grad_enabled(False):
     for i, (image_app, label_app) in enumerate(
@@ -517,8 +492,9 @@ with torch.set_grad_enabled(False):
         for j in range(0, e):
             t = out[0][j].cpu().numpy()
             t = cv2.resize(t, dsize=(512, 512), interpolation=cv2.INTER_CUBIC)
-            filename_little_endian = ("/content/drive/My Drive/NewDataset/new_save_slices/%d.dcm" % (j,))
-            ds = write_dicom(t, filename_little_endian, j)
+            slicesLocation = float(slice1Location - (sliceThickness * j))
+            ds = write_dicom(t, j, slicesLocation, dss)
+            ds.save_as(r"/content/drive/My Drive/NewDataset/new_saved_slices/%d.dcm" % (j + 1,))
 
 
 
