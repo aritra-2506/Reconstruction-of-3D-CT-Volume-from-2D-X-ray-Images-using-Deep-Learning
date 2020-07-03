@@ -63,6 +63,17 @@ def write_dicom(image2d, i, slicesLocation, dss):
 
     print(a)
     ds.ImagePositionPatient = [a, b, sliceLocation]
+    
+    ds.BitsStored = 16
+    ds.BitsAllocated = 16
+    ds.SamplesPerPixel = 1
+    ds.HighBit = 15
+    ds.PixelPaddingValue = -2000
+    ds.PixelRepresentation = 1
+    ds.NumberofSlices = 150
+    ds.KVP = 120
+    ds.BodyPartExamined = 'CHEST'
+    ds.Modality = "MR"
 
     print("Setting pixel data...")
     ds.PixelData = image2d.tobytes()
