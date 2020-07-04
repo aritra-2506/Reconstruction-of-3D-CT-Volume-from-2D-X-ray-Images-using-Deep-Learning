@@ -278,6 +278,8 @@ class UNet(nn.Module):
         convs=self.out_conv1(convs)
         convs = self.out_conv1(convs)
         convs = self.out_conv1(convs)
+        convs = self.out_conv1(convs)
+        convs = self.out_conv1(convs)
 
         x.to(device)
         convs.to(device)
@@ -291,7 +293,7 @@ output.cuda()
 
 # print(output)
 
-optimizer = optim.Adam(output.parameters(), lr=0.000001)
+optimizer = optim.Adam(output.parameters(), lr=0.0001)
 
 metric_values = []
 epoch_values = []
