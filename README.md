@@ -1,4 +1,4 @@
-# Reconstruction-of-3D-CT-Volume-from-2D-X-ray-Images-from-3-different-angles
+# Reconstruction-of-3D-CT-Volume-from-2D-X-ray-Images
 The network inputs a 2D X-ray Image from 3 different views (Front, Lateral and Top) and outputs a 3D CT Volume.
 
 LIDC Dataset was used in this project. It has 1012 entries of patients. But only 172 suitable entries were selected.
