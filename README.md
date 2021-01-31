@@ -11,7 +11,8 @@ Dataset preprocessing has be done in two different ways:
 1. Using MeVisLab
 2. Using Python script
 
-For MeVisLab, the workflow of modules responsible for resampling is present in resampling.png and the one responsible for generation of DRRs in drrs.png inside mevislab_setup folder. It stores the files in .dcm format.
+For MeVisLab, the workflow of modules responsible for resampling is present in resampling.png and the one responsible for generation of DRRs in drrs.png inside 'mevislab_setup' folder. It stores the files in .dcm format.
+
 For Python script, resampling and DRRs generation are both done using data_generation.py. It stores the files in .npy format.
 In the final setup, in the training phase, data augmentation is done to targets (resampled CT volume) and inputs (DRRs) are generated on the fly (generate_drr.py inside aritra_project) with augmented data, whereas in validation phase,
 both inputs and targets are generated beforehand statically (data_generation.py), as there is no augmentation, all by using Python scripts.
@@ -19,9 +20,9 @@ both inputs and targets are generated beforehand statically (data_generation.py)
 Besides that, the folder 'aritra_project' has the code which does the the reconstruction task.
 
 Different kinds of image reconstruction networks was used: 2D UNet, 3D UNet, 2D - 3D UNet, UNet weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
-Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are used as accuracy metrices. Best ones have been retained.
+Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are used as accuracy metrices. Best ones have been retained and stored inside 'results' folder.
 
-The final setup uses a 2D UNet, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside results folder.
+The final setup uses a 2D UNet, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
 
 The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 are stored in results folder.
 
