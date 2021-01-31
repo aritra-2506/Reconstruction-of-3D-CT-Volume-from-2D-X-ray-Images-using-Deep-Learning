@@ -23,7 +23,7 @@ Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are us
 
 The final setup uses a 2D UNet, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside results folder.
 
-The maximum validation accuracy (SSIM) that was recorded was a little more than 71%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 are stored in results folder.
+The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 are stored in results folder.
 
 
 
