@@ -3,8 +3,8 @@ The network inputs a 2D X-ray Image from 3 different views (Front, Lateral and T
 
 LIDC Dataset was used in this project. It has 1012 entries of patients. But only 172 suitable entries were selected.
 
-Each entry of patient has unequal number of CT scan slices (300 or 400 or 550) each of dimension (512*512), which constitue the CT volume altogether. Dataset preprocessing needs to be 
-done to resample it to 256 number of slices each of dimension (256*256). This CT volume (256*256*256) is the target (/output) of the network. DRR was generated for front, top
+Each entry of patient has unequal number of CT scan slices (300 or 400 or 550) each of dimension (512_512), which constitue the CT volume altogether. Dataset preprocessing needs to be 
+done to resample it to 256 number of slices each of dimension (256_256). This CT volume (256_256_256) is the target (/output) of the network. DRR was generated for front, top
 and lateral views for each of these CT volumes and these 3 views form the input to the network. Output dimension for a batch size of 2, is [2,256,256,256] and input is [2, 3, 256, 256].
 
 Dataset preprocessing has be done in two different ways:
