@@ -5,7 +5,7 @@ LIDC Dataset was used in this project. It has 1012 entries of patients. But only
 
 Each entry of patient has unequal number of CT scan slices (300 or 400 or 550) each of dimension (512_512), which constitue the CT volume altogether. Dataset preprocessing needs to be 
 done to resample it to 256 number of slices each of dimension (256_256). This CT volume (256_256_256) is the target (/output) of the network. DRR was generated for front, top
-and lateral views for each of these CT volumes and these 3 views form the input to the network. Output dimension for a batch size of 2, is [2,256,256,256] and input is [2, 3, 256, 256].
+and lateral views for each of these CT volumes and these 3 views form the input to the network. Output dimension for a batch size of 2, is [2, 256, 256, 256] and input is [2, 3, 256, 256].
 
 Dataset preprocessing has be done in two different ways:
 1. Using MeVisLab
@@ -25,6 +25,19 @@ Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are us
 The final setup uses a 2D UNet, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
 
 The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
+
+
+Steps:
+
+1. Clone the repository.
+2. Download the LIDC Dataset from the internet.
+3. Use the data_generation.py file for inputs (DRRs) generation and labels (CT volume) resampling and generation. Before that, change the path to input_folder of LIDC dataset and also to the output_folder, where you want to save the dataset. Alternately, you can use the MeVisLab setup mentioned above for both resampling and data generation. A batch size of 2 would be an input torch tensor of shape [2, 3, 256, 256] (as there are 3 different views of DRR for a single patient and there are 2 patients) and output from the network would be a tensor of shape [2, 256, 256, 256] as it is a volume of are 256 slices (z), each of shape [256 (x) by 256 (y)] each.
+4. Save the dataset within the 'aritra_project' folder as dataset. 
+5. Select the suitable number of patients from the whole dataset.
+6. Change the path to dataset in data_loader.py, the path to saving results in visualize.py, the path to loading state dictionaries and saving the application output in app.py.
+7. Install all the necessary libraries present in the code.
+8. Run main.py file.
+9. SSIM, PSNR and loss and all other essentials will be stored inside 'results' folder inside 'aritra_project' folder. Application output will be stored inside 'slices' folder inside 'results' folder.
 
 
 
