@@ -19,20 +19,20 @@ both inputs and targets are generated beforehand statically (data_generation.py)
 
 Besides that, the folder 'aritra_project' has the code which does the the reconstruction task.
 
-Different kinds of image reconstruction networks was used: 2D UNet, 3D UNet, 2D - 3D UNet, UNet weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
+Different kinds of image reconstruction networks was used: 2D U-Net, 3D U-Net, 2D - 3D U-Net, U-Net weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
 Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are used as accuracy metrices. Best ones have been retained and stored inside 'results' folder.
 
-The final setup uses a 2D UNet, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
+The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
 
 The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
 
 
 Steps:
 
-1. Clone the repository.
+1. Clone the repository. 
 2. Download the LIDC Dataset from the internet.
 3. Use the data_generation.py file for inputs (DRRs) generation and labels (CT volume) resampling and generation. Before that, change the path to input_folder of LIDC dataset and also to the output_folder, where you want to save the dataset. Alternately, you can use the MeVisLab setup mentioned above for both resampling and data generation. A batch size of 2 would be an input torch tensor of shape [2, 3, 256, 256] (as there are 3 different views of DRR for a single patient and there are 2 patients) and output from the network would be a tensor of shape [2, 256, 256, 256] as it is a volume of are 256 slices (z), each of shape [256 (x) by 256 (y)] each.
-4. Save the dataset within the 'aritra_project' folder as dataset. 
+4. Save the dataset within the 'aritra_project' folder as dataset and select 'aritra_project' folder as working directory.
 5. Select the suitable number of patients from the whole dataset.
 6. Change the path to dataset in data_loader.py, the path to saving results in visualize.py, the path to loading state dictionaries and saving the application output in app.py.
 7. Install all the necessary libraries present in the code.
