@@ -26,6 +26,8 @@ The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction 
 
 The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
 
+final_network.png and dataset_preprocessing.png depict the version of the Network and the complete Data Preprocessing method used for this project.
+
 
 Steps:
 
