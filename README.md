@@ -38,6 +38,7 @@ Apart from the ‘results’ folder, there is ‘Miscellaneous Results’ folder
 	2.	Reconstruction of 3D Front-view CT from itself (Accuracy = 91.9%)
 	3.	Reconstruction of 3D Lateral-view DRR from 3D front+lateral+top-view CT (Accuracy = 72.7%)
 	4.	Reconstruction of 3D Top-view DRR from 3D front+lateral+top-view CT (Accuracy = 74%)
+	5.      A comparison among original, noisy input and denoised output DRR.
 Apart from that, there is a folder of Data Augmentation, which shows augmentation impact on both input and labels for Shift, Scale, Rotate (shift = 0.2, scale = 0.2, rotate = 45 degrees) and Elastic Transform (alpha = 1, beta = 50).
 
 complete_workflow.png, dataset_pre-processing.png, network_architecture.png and network_diagram and depict the complete workflow, data pre-processing method, complete network architecture as functional blocks and actual netork diagram respectively.
