@@ -1,5 +1,5 @@
 # Reconstruction-of-3D-CT-Volume-from-2D-X-ray-Images-using-Deep-Learning
-The network inputs a 2D X-ray Image from 1/2/3 different views (Front, Lateral and Top) and outputs a 3D CT Volume.
+The network inputs a 2D X-ray/DRR Image from 1/2/3 different views (Frontal/Frontal+Lateral/Frontal+Lateral+Top) and outputs a 3D CT Volume.
 
 LIDC Dataset was used in this project. It has 1012 entries of patients. But only 172 suitable entries were selected.
 
@@ -20,11 +20,17 @@ both inputs and targets are generated beforehand statically (data_generation.py)
 Besides that, the folder 'aritra_project' has the code which does the the reconstruction task.
 
 Different kinds of image reconstruction networks was used: 2D U-Net, 3D U-Net, 2D - 3D U-Net, U-Net weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
-Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are used as accuracy metrices. Best ones have been retained and stored inside 'results' folder.
+Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM (primarily) and PSNR are used as accuracy metrices. Best ones have been retained and stored inside 'results' folder.
+The maximum validation accuracy (SSIM) that was recorded was 80.2%. 
+Results have been stored inside ‘results’ folder in 6 different stages. Every stage incorporates the best combination from the last stage, while testing a different parameter in its own stage.
+ 1. Stage 1 - Baseline (Accuracy (SSIM) = 63.5%) : It contains front-view DRR as input and top-view CT as label, both pre-processed by MeVisLab. 
+2. Stage 2 - Dataset Preprocessing (Python) (Accuracy = 65%) : It contains same input-label combination as stage 1, except that it has been entirely pre-processed by Python script.
+3. Stage 3 - CT-DRR Combination (Frontal) (Accuracy = 72.5%) : It contains front-view DRR and front-view CT as input-label combination.
+4. Stage 4 - Loss (Decomposition+Reconstruction) (Accuracy = 72.9%) : It incorporates the reconstruction loss apart from the best combination from last stage, which had only decomposition loss.
+5. Stage 5 - Dimension (512 pixels) (Accuracy = 80.2%) : Dimension of input is set at 512_512 pixels and that of CT at 512_512_512 pixels.
+6. Stage 6 - Viewpoint (Frontal+Lateral) (Accuracy = 80.2%) : Here apart from front-view DRR, also lateral-view DRR is fed as input.
+The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. Results are stored inside ‘results’ and ‘Miscellaneous Results’ folders.
 
-The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
-
-The maximum validation accuracy (SSIM) that was recorded was 80.2%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
 
 final_network.png and dataset_preprocessing.png depict the version of the Network and the complete Data Preprocessing method used for this project.
 
@@ -40,6 +46,7 @@ Steps:
 7. Install all the necessary libraries present in the code.
 8. Run main.py file.
 9. SSIM, PSNR and loss and all other essentials will be stored inside 'results' folder inside 'aritra_project' folder. Application output will be stored inside 'slices' folder inside 'results' folder.
+
 
 
 
