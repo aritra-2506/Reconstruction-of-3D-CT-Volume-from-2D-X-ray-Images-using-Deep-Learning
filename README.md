@@ -1,5 +1,5 @@
 # Reconstruction-of-3D-CT-Volume-from-2D-X-ray-Images
-The network inputs a 2D X-ray Image from 3 different views (Front, Lateral and Top) and outputs a 3D CT Volume.
+The network inputs a 2D X-ray Image from 1/2/3 different views (Front, Lateral and Top) and outputs a 3D CT Volume.
 
 LIDC Dataset was used in this project. It has 1012 entries of patients. But only 172 suitable entries were selected.
 
@@ -24,7 +24,7 @@ Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM and PSNR are us
 
 The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. SSIM.png, PSNR.png and loss.png are stored in slices inside 'results' folder.
 
-The maximum validation accuracy (SSIM) that was recorded was 72%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
+The maximum validation accuracy (SSIM) that was recorded was 80.2%. Slices 133.png, 166.png and 172.png which are the corrsponding slices out of 256 and reference DRRs, Frontal, Lateral and Top, as DRRs.png inside Reference DRR, are stored in results folder.
 
 final_network.png and dataset_preprocessing.png depict the version of the Network and the complete Data Preprocessing method used for this project.
 
