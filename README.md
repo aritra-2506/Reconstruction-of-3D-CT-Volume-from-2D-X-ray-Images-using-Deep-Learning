@@ -20,7 +20,7 @@ both inputs and targets are generated beforehand statically (data_generation.py)
 Besides that, the folder 'aritra_project' has the code which does the the reconstruction task.
 
 Different kinds of image reconstruction networks was used: 2D U-Net, 3D U-Net, 2D - 3D U-Net, U-Net weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
-Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM (primarily) and PSNR are used as accuracy metrices. 
+Decomposition Loss, Reconstruction Loss, Latent Space Loss. They are comprised of weighted combination of first and second norm between output and label pixel values. SSIM (primarily) and PSNR are used as accuracy metrices. 
 The maximum validation accuracy (SSIM) that was recorded was 80.2%. 
 Best results have been stored inside ‘results’ folder in 6 different stages. Every stage incorporates the best combination from the last stage, while testing a different parameter in its own stage.
  1. Stage 1 - Baseline (Accuracy (SSIM) = 63.5%) : It contains front-view DRR as input and top-view CT as label, both pre-processed by MeVisLab. 
