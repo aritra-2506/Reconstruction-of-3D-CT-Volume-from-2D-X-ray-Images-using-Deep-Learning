@@ -32,7 +32,7 @@ Results have been stored inside ‘results’ folder in 6 different stages. Ever
 The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. Results are stored inside ‘results’ and ‘Miscellaneous Results’ folders.
 
 
-final_network.png and dataset_preprocessing.png depict the version of the Network and the complete Data Preprocessing method used for this project.
+complete_workflow.png, dataset_pre-processing.png, network_architecture.png and network_diagram and depict the complete workflow, data pre-processing method, complete network architecture as functional blocks and actual netork diagram respectively.
 
 
 Steps:
