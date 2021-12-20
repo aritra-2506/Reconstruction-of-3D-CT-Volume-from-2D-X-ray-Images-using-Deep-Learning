@@ -20,17 +20,23 @@ both inputs and targets are generated beforehand statically (data_generation.py)
 Besides that, the folder 'aritra_project' has the code which does the the reconstruction task.
 
 Different kinds of image reconstruction networks was used: 2D U-Net, 3D U-Net, 2D - 3D U-Net, U-Net weighted with ResNet. Different hyperparameters are tried. Different loss functions have been used:
-Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM (primarily) and PSNR are used as accuracy metrices. Best ones have been retained and stored inside 'results' folder.
+Decomposition Loss, Reconstruction Loss, Latent Space Loss. SSIM (primarily) and PSNR are used as accuracy metrices. 
 The maximum validation accuracy (SSIM) that was recorded was 80.2%. 
-Results have been stored inside ‘results’ folder in 6 different stages. Every stage incorporates the best combination from the last stage, while testing a different parameter in its own stage.
+Best results have been stored inside ‘results’ folder in 6 different stages. Every stage incorporates the best combination from the last stage, while testing a different parameter in its own stage.
  1. Stage 1 - Baseline (Accuracy (SSIM) = 63.5%) : It contains front-view DRR as input and top-view CT as label, both pre-processed by MeVisLab. 
 2. Stage 2 - Dataset Preprocessing (Python) (Accuracy = 65%) : It contains same input-label combination as stage 1, except that it has been entirely pre-processed by Python script.
 3. Stage 3 - CT-DRR Combination (Frontal) (Accuracy = 72.5%) : It contains front-view DRR and front-view CT as input-label combination.
 4. Stage 4 - Loss (Decomposition+Reconstruction) (Accuracy = 72.9%) : It incorporates the reconstruction loss apart from the best combination from last stage, which had only decomposition loss.
 5. Stage 5 - Dimension (512 pixels) (Accuracy = 80.2%) : Dimension of input is set at 512_512 pixels and that of CT at 512_512_512 pixels.
 6. Stage 6 - Viewpoint (Frontal+Lateral) (Accuracy = 80.2%) : Here apart from front-view DRR, also lateral-view DRR is fed as input.
-The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss and SSIM and PSNR as metrics. Results are stored inside ‘results’ and ‘Miscellaneous Results’ folders.
+The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss, Frontal+Lateral DRR as input, front-view CT as output, both of dimension 512 pixels and pre-processed by Python script and SSIM and PSNR as metrics. 
 
+Apart from the ‘results’ folder, there is ‘Miscellaneous Results’ folder which contains other expeirments which have been conducted. They are:
+	1.	Generation of 2D Front-view DRR from 3D front-view CT (Accuracy = 98.1%)
+	2.	Reconstruction of 3D Front-view CT from itself (Accuracy = 91.9%)
+	3.	Reconstruction of 3D Lateral-view DRR from 3D front+lateral+top-view CT (Accuracy = 72.7%)
+	4.	Reconstruction of 3D Top-view DRR from 3D front+lateral+top-view CT (Accuracy = 74%)
+Apart from that, there is a folder of Data Augmentation, which shows augmentation impact on both input and labels for Shift, Scale, Rotate (shift = 0.2, scale = 0.2, rotate = 45 degrees) and Elastic Transform (alpha = 1, beta = 50).
 
 complete_workflow.png, dataset_pre-processing.png, network_architecture.png and network_diagram and depict the complete workflow, data pre-processing method, complete network architecture as functional blocks and actual netork diagram respectively.
 
