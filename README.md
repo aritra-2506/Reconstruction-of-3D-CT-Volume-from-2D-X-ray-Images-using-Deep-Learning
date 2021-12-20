@@ -31,6 +31,8 @@ Best results have been stored inside ‘results’ folder in 6 different stages.
 6. Stage 6 - Viewpoint (Frontal+Lateral) (Accuracy = 80.2%) : Here apart from front-view DRR, also lateral-view DRR is fed as input.
 The final setup uses a 2D U-Net, Adam optimizer, Decomposition + Reconstruction Loss, Frontal+Lateral DRR as input, front-view CT as output, both of dimension 512 pixels and pre-processed by Python script and SSIM and PSNR as metrics. 
 
+PSNR for first stage is 16.339 dB and that for last stage is 22.714 dB. Absolute Loss values are 150214.282 and 86451.029 for first and last stages respectively. 
+
 Apart from the ‘results’ folder, there is ‘Miscellaneous Results’ folder which contains other expeirments which have been conducted. They are:
 	1.	Generation of 2D Front-view DRR from 3D front-view CT (Accuracy = 98.1%)
 	2.	Reconstruction of 3D Front-view CT from itself (Accuracy = 91.9%)
