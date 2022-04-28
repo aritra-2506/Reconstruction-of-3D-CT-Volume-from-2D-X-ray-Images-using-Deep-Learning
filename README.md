@@ -56,7 +56,6 @@ Steps:
 8. Run main.py file.
 9. SSIM, PSNR and loss and all other essentials will be stored inside 'results' folder inside 'aritra_project' folder. Application output will be stored inside 'slices' folder inside 'results' folder.
 
-Thesis Documents contain the Thesis Report and Thesis Presentation.
 
 
 
